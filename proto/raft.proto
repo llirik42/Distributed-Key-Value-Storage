@@ -28,7 +28,7 @@ message AppendEntriesResponse {
   bool success = 2;
 }
 
-service PostService {
+service RaftService {
   rpc RequestForVote(RequestVoteRequest) returns (RequestVoteResponse) {}
 
   rpc AppendEntries(AppendEntriesRequest) returns (AppendEntriesResponse) {}
