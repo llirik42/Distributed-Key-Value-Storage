@@ -1,7 +1,7 @@
 syntax = "proto3";
 
-package raft;
-option go_package = "./raft";
+package raft_protocol;
+option go_package = "./raft_protocol";
 
 message RequestVoteRequest {
   int32 term = 1;
