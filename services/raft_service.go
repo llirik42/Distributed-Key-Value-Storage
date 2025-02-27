@@ -15,7 +15,6 @@ func (raftService *RaftService) RequestForVote(ctx context.Context, request *pb.
 	// TODO: add checks about candidate's log
 
 	currentTerm := raftService.Node.GetCurrentTerm()
-
 	var voteGranted bool
 
 	if request.Term < currentTerm {
@@ -28,7 +27,9 @@ func (raftService *RaftService) RequestForVote(ctx context.Context, request *pb.
 }
 
 func (raftService *RaftService) AppendEntries(ctx context.Context, request *pb.AppendEntriesRequest) (*pb.AppendEntriesResponse, error) {
+	// TODO: add checks related to log entries
+
 	currentTerm := raftService.Node.GetCurrentTerm()
-	success := request.Term >= currentTerm // TODO: add checks related to log entries
+	success := request.Term >= currentTerm
 	return &pb.AppendEntriesResponse{Term: currentTerm, Success: success}, nil
 }
