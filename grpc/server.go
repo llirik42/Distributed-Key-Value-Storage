@@ -1,4 +1,4 @@
-package services
+package grpc
 
 import (
 	"context"
@@ -6,14 +6,15 @@ import (
 	"distributed-algorithms/raft"
 )
 
-type RaftService struct {
+type RaftServiceServer struct {
 	pb.RaftServiceServer
+
 	Node *raft.Node
 }
 
-func (raftService *RaftService) RequestForVote(ctx context.Context, request *pb.RequestVoteRequest) (*pb.RequestVoteResponse, error) {
+func (raftService *RaftServiceServer) RequestForVote(ctx context.Context, request *pb.RequestVoteRequest) (*pb.RequestVoteResponse, error) {
 	// TODO: add checks about candidate's log
-	
+
 	currentTerm := raftService.Node.GetCurrentTerm()
 	var voteGranted bool
 
@@ -26,7 +27,7 @@ func (raftService *RaftService) RequestForVote(ctx context.Context, request *pb.
 	return &pb.RequestVoteResponse{Term: currentTerm, VoteGranted: voteGranted}, nil
 }
 
-func (raftService *RaftService) AppendEntries(ctx context.Context, request *pb.AppendEntriesRequest) (*pb.AppendEntriesResponse, error) {
+func (raftService *RaftServiceServer) AppendEntries(ctx context.Context, request *pb.AppendEntriesRequest) (*pb.AppendEntriesResponse, error) {
 	// TODO: add checks related to log entries
 
 	currentTerm := raftService.Node.GetCurrentTerm()

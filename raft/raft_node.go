@@ -8,7 +8,9 @@ import (
 )
 
 type Node struct {
-	nodeState   int
+	nodeState      int
+	nodeStateMutex sync.Mutex
+
 	commonState CommonState
 	leaderState LeaderState
 	// add field for client connections
@@ -41,8 +43,11 @@ func electionTimer(node *Node) {
 
 func NewNode() *Node {
 	node := new(Node)
-	node.isElectionTimerReset = make(chan bool)
 	node.nodeState = test.FOLLOWER
+	node.nodeStateMutex = sync.Mutex{}
+
+	node.isElectionTimerReset = make(chan bool)
+
 	node.commonState = CommonState{
 		currentTerm: 0,
 		votedFor:    noVotedFor,
@@ -52,6 +57,46 @@ func NewNode() *Node {
 	node.voteMutex = sync.Mutex{}
 
 	return node
+}
+
+func (node *Node) changeState(newState int) {
+	node.voteMutex.Lock()
+	node.nodeState = newState
+	node.voteMutex.Unlock()
+}
+
+func (node *Node) BecomeLeader() {
+	node.changeState(test.LEADER)
+}
+
+func (node *Node) BecomeCandidate() {
+	node.changeState(test.CANDIDATE)
+}
+
+func (node *Node) BecomeFollower() {
+	node.changeState(test.FOLLOWER)
+}
+
+func (node *Node) IsLeader() bool {
+	node.voteMutex.Lock()
+	result := node.nodeState == test.LEADER
+	node.voteMutex.Unlock()
+	return result
+}
+
+func (node *Node) IsCandidate() bool {
+	node.voteMutex.Lock()
+	result := node.nodeState == test.LEADER
+	node.voteMutex.Unlock()
+	return result
+}
+
+// IsFollower TODO: Is this method used anywhere?
+func (node *Node) IsFollower() bool {
+	node.voteMutex.Lock()
+	result := node.nodeState == test.LEADER
+	node.voteMutex.Unlock()
+	return result
 }
 
 func (node *Node) resetElectionTimeout() error {
