@@ -1,9 +1,14 @@
 package main
 
 import (
+	pb "distributed-algorithms/generated/proto"
+	"distributed-algorithms/transport"
 	"fmt"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"log"
 	"math/rand"
+	"net"
 	"time"
 )
 
@@ -60,23 +65,25 @@ func main() {
 
 	fmt.Println(input)
 
-	//listener, err := net.Listen("tcp", "127.0.0.1:9111")
-	//if err != nil {
-	//	log.Fatalf("failed to listen: %v", err)
-	//} else {
-	//	log.Println("listening on :9111")
-	//}
-	//
-	//go electionTimer()
-	//
-	//grpcServer := grpc.NewServer()
-	//service := &services.RaftService{}
-	//
-	//pb.RegisterRaftServiceServer(grpcServer, service)
-	//reflection.Register(grpcServer)
-	//err = grpcServer.Serve(listener)
-	//
-	//if err != nil {
-	//	log.Fatalf("Error starting server: %v", err)
-	//}
+	listener, err := net.Listen("tcp", "127.0.0.1:9111")
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	} else {
+		log.Println("listening on :9111")
+	}
+
+	go electionTimer()
+
+	grpcServer := grpc.NewServer()
+	service := &transport.RaftServiceServer{
+		On: nil,
+	}
+
+	pb.RegisterRaftServiceServer(grpcServer, service)
+	reflection.Register(grpcServer)
+	err = grpcServer.Serve(listener)
+
+	if err != nil {
+		log.Fatalf("Error starting server: %v", err)
+	}
 }

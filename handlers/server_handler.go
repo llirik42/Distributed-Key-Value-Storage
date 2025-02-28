@@ -1,18 +1,14 @@
-package grpc
+package handlers
 
 import (
-	"context"
+	"distributed-algorithms/dto"
 	pb "distributed-algorithms/generated/proto"
-	"distributed-algorithms/raft"
 )
 
-type RaftServiceServer struct {
-	pb.RaftServiceServer
-
-	Node *raft.Node
+type ServerHandler struct {
 }
 
-func (raftService *RaftServiceServer) RequestForVote(ctx context.Context, request *pb.RequestVoteRequest) (*pb.RequestVoteResponse, error) {
+func (handler *ServerHandler) RequestForVote(request dto.RequestVoteRequest) (dto.RequestVoteRequest, error) {
 	// TODO: add checks about candidate's log
 
 	currentTerm := raftService.Node.GetCurrentTerm()
@@ -27,7 +23,7 @@ func (raftService *RaftServiceServer) RequestForVote(ctx context.Context, reques
 	return &pb.RequestVoteResponse{Term: currentTerm, VoteGranted: voteGranted}, nil
 }
 
-func (raftService *RaftServiceServer) AppendEntries(ctx context.Context, request *pb.AppendEntriesRequest) (*pb.AppendEntriesResponse, error) {
+func (handler *ServerHandler) AppendEntries(ctx context.Context, request *pb.AppendEntriesRequest) (*pb.AppendEntriesResponse, error) {
 	// TODO: add checks related to log entries
 
 	currentTerm := raftService.Node.GetCurrentTerm()
