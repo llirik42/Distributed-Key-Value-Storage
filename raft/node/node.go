@@ -4,13 +4,21 @@ import (
 	"distributed-algorithms/raft/transport"
 	"log"
 	"sync"
+	"sync/atomic"
 )
 
 type Node struct {
+	nodeId int32
+
 	nodeType      int
 	nodeTypeMutex sync.Mutex
 
+	currentTerm      atomic.Int32
+	currentTermMutex sync.Mutex
+
 	server transport.Server
+
+	clients []transport.Client
 }
 
 func NewNode(serverFactory transport.ServerFactory, factory transport.ClientFactory) (*Node, error) {
@@ -26,6 +34,26 @@ func NewNode(serverFactory transport.ServerFactory, factory transport.ClientFact
 
 func (node *Node) Start() error {
 	return node.server.Listen()
+}
+
+func (node *Node) GetId() int32 {
+	return node.nodeId
+}
+
+func (node *Node) SetCurrentTerm(value int32) {
+	node.currentTerm.Store(value)
+}
+
+func (node *Node) IncrementCurrentTerm() {
+	node.currentTerm.Add(1)
+}
+
+func (node *Node) GetCurrentTerm() int32 {
+	return node.currentTerm.Load()
+}
+
+func (node *Node) GetClients() []transport.Client {
+	return node.clients
 }
 
 func (node *Node) BecomeFollower() {
