@@ -2,6 +2,7 @@ package grpc
 
 import (
 	pb "distributed-algorithms/generated/proto"
+	"distributed-algorithms/raft/transport"
 	"errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -9,7 +10,7 @@ import (
 
 type ClientFactory struct{}
 
-func (factory *ClientFactory) NewClient(address string) (*Client, error) {
+func (factory ClientFactory) NewClient(address string) (*transport.Client, error) {
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	}
@@ -20,8 +21,12 @@ func (factory *ClientFactory) NewClient(address string) (*Client, error) {
 		return nil, errors.Join(errors.New("failed to create gRPC-client"), err)
 	}
 
-	return &Client{
+	client := &Client{
 		gRPCClient:     pb.NewRaftServiceClient(gRPCConnection),
 		gRPCConnection: gRPCConnection,
-	}, nil
+	}
+
+	var transportClient transport.Client = client
+
+	return &transportClient, nil
 }
