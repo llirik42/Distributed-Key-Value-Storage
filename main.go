@@ -1,7 +1,7 @@
 package main
 
 import (
-	"distributed-algorithms/raft"
+	"distributed-algorithms/raft/node"
 	"distributed-algorithms/raft/transport/grpc"
 	"fmt"
 )
@@ -52,7 +52,10 @@ import (
 //}
 
 func main() {
-	_, err := raft.NewNode(grpc.ServerFactory{})
+	serverFactory := grpc.ServerFactory{}
+	clientFactory := grpc.ClientFactory{}
+
+	_, err := node.NewNode(serverFactory, clientFactory)
 
 	if err != nil {
 		fmt.Println(err)
