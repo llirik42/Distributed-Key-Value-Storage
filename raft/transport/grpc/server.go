@@ -2,9 +2,10 @@ package grpc
 
 import (
 	"context"
-	"distributed-algorithms/dto"
 	pb "distributed-algorithms/generated/proto"
-	"distributed-algorithms/transport"
+	"distributed-algorithms/raft/dto"
+	"distributed-algorithms/raft/transport"
+	"errors"
 	"google.golang.org/grpc"
 	"net"
 )
@@ -26,7 +27,7 @@ func (server *Server) RequestForVote(_ context.Context, request *pb.RequestVoteR
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(errors.New("failed to handle request for vote: "+request.String()), err)
 	}
 
 	return &pb.RequestVoteResponse{Term: result.Term, VoteGranted: result.VoteGranted}, nil
@@ -42,12 +43,18 @@ func (server *Server) AppendEntries(_ context.Context, request *pb.AppendEntries
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(errors.New("failed to handle append entries: "+request.String()), err)
 	}
 
 	return &pb.AppendEntriesResponse{Term: result.Term, Success: result.Success}, nil
 }
 
 func (server *Server) Listen() error {
-	return server.gRPCServer.Serve(server.listener)
+	err := server.gRPCServer.Serve(server.listener)
+
+	if err != nil {
+		return errors.Join(errors.New("failed to start gRPC-server"), err)
+	}
+
+	return nil
 }

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"distributed-algorithms/dto"
-	"distributed-algorithms/transport/grpc"
-	"log"
+	"distributed-algorithms/raft"
+	"distributed-algorithms/raft/transport/grpc"
+	"fmt"
 )
 
 //func electionTimer() {
@@ -51,29 +51,11 @@ import (
 //	}
 //}
 
-func handler1(request dto.RequestVoteRequest) (*dto.RequestVoteResponse, error) {
-	log.Printf("Received voting: %v", request)
-	return &dto.RequestVoteResponse{}, nil
-}
-
-func handler2(request dto.AppendEntriesRequest) (*dto.AppendEntriesResponse, error) {
-	log.Printf("Received append: %v", request)
-	return &dto.AppendEntriesResponse{}, nil
-}
-
 func main() {
-	serverFactory := &grpc.ServerFactory{}
-
-	server, err := serverFactory.NewServer("0.0.0.0:8080", handler1, handler2)
+	_, err := raft.NewNode(grpc.ServerFactory{})
 
 	if err != nil {
-		panic(err)
-	}
-
-	err1 := server.Listen()
-
-	if err1 != nil {
-		panic(err1)
+		fmt.Println(err)
 	}
 
 	//go followerLoop()

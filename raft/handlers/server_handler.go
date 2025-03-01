@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"distributed-algorithms/dto"
 	pb "distributed-algorithms/generated/proto"
+	"distributed-algorithms/raft/dto"
 )
 
 type ServerHandler struct {

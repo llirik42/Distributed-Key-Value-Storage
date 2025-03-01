@@ -12,11 +12,11 @@ func leaderLoop(node *Node) {
 		time.Sleep(duration)
 
 		// Node stopped being leader
-		if !node.IsLeader() {
-			break
-		}
+		//if !node.IsLeader() {
+		//	break
+		//}
 
 		// Send heartbeat
-		
+
 	}
 }

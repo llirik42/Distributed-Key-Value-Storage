@@ -2,8 +2,9 @@ package grpc
 
 import (
 	"context"
-	"distributed-algorithms/dto"
 	pb "distributed-algorithms/generated/proto"
+	"distributed-algorithms/raft/dto"
+	"errors"
 	"google.golang.org/grpc"
 )
 
@@ -23,7 +24,7 @@ func (client *Client) SendRequestForVote(request dto.RequestVoteRequest) (*dto.R
 	pbResponse, pbErr := client.gRPCClient.RequestForVote(context.Background(), pbRequest)
 
 	if pbErr != nil {
-		return nil, pbErr
+		return nil, errors.Join(errors.New("failed to send request for vote: "+pbRequest.String()), pbErr)
 	}
 
 	response := dto.RequestVoteResponse{
@@ -46,7 +47,7 @@ func (client *Client) SendAppendEntries(request dto.AppendEntriesRequest) (*dto.
 	pbResponse, pbErr := client.gRPCClient.AppendEntries(context.Background(), pbRequest)
 
 	if pbErr != nil {
-		return nil, pbErr
+		return nil, errors.Join(errors.New("failed to send append entries: "+pbRequest.String()), pbErr)
 	}
 
 	response := dto.AppendEntriesResponse{
@@ -58,5 +59,11 @@ func (client *Client) SendAppendEntries(request dto.AppendEntriesRequest) (*dto.
 }
 
 func (client *Client) Close() error {
-	return client.gRPCConnection.Close()
+	err := client.gRPCConnection.Close()
+
+	if err != nil {
+		return errors.Join(errors.New("failed to close gRPC-client"), err)
+	}
+
+	return nil
 }

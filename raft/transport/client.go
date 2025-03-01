@@ -1,6 +1,8 @@
 package transport
 
-import "distributed-algorithms/dto"
+import (
+	"distributed-algorithms/raft/dto"
+)
 
 type HandleRequestForVoteResponse func(request dto.RequestVoteResponse) error
 type HandleAppendEntriesResponse func(request dto.AppendEntriesResponse) error
