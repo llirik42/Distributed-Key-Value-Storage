@@ -1,7 +1,7 @@
 package domain
 
 const (
-	follower = iota
-	candidate
-	leader
+	FOLLOWER = iota
+	CANDIDATE
+	LEADER
 )

@@ -1,24 +1,19 @@
 package context
 
 import (
-	"distributed-algorithms/raft"
+	"distributed-algorithms/raft/domain"
 	"distributed-algorithms/raft/transport"
-	"log"
 	"sync"
 	"sync/atomic"
 	"time"
 )
 
-type HeartbeatInfo struct {
-	time     time.Time
-	leaderId Id
-}
-
-type Id int32
-
 type Context struct {
-	nodeId   Id
-	votedFor Id
+	nodeId uint32
+
+	voted         bool // TODO В какой момент нужно сбросить?
+	votedFor      uint32
+	votedForMutex sync.Mutex
 
 	voteNumber atomic.Int32
 
@@ -30,15 +25,42 @@ type Context struct {
 	candidateLoopTicker *time.Ticker
 	leaderLoopTicker    *time.Ticker
 
-	server transport.Server
-
 	clients []transport.Client
 }
 
-func (ctx *Context) Start() error {
-	ctx.nodeType = follower // is it necessary to use ctx.setType?
+func NewContext() *Context {
+	// TODO: init all fields
 
-	return ctx.server.Listen()
+	ctx := &Context{}
+
+	ctx.nodeType = domain.FOLLOWER // is it necessary to use ctx.setType here?
+	return ctx
+}
+
+func (ctx *Context) ResetVote() {
+	ctx.votedForMutex.Lock()
+	ctx.voted = false
+	ctx.votedForMutex.Unlock()
+}
+
+func (ctx *Context) Vote(candidateId uint32) bool {
+	ctx.votedForMutex.Lock()
+
+	var result bool
+
+	if !ctx.voted {
+		ctx.votedFor = candidateId
+		ctx.voted = true
+		result = true
+	} else {
+		// If the candidate we voted for falls, we'll again vote for it
+		// If result = false, in this case we won't vote for the candidate
+		result = ctx.votedFor == candidateId // In case ca
+	}
+
+	ctx.votedForMutex.Unlock()
+
+	return result
 }
 
 func (ctx *Context) IncrementVoteNumber() {
@@ -60,7 +82,7 @@ func (ctx *Context) CheckTerm(term int32) {
 	}
 }
 
-func (ctx *Context) GetId() Id {
+func (ctx *Context) GetNodeId() uint32 {
 	return ctx.nodeId
 }
 
@@ -81,30 +103,30 @@ func (ctx *Context) GetClients() []transport.Client {
 }
 
 func (ctx *Context) BecomeFollower() {
-	ctx.setType(follower)
+	ctx.setType(domain.FOLLOWER)
 	// TODO: do something with tickers
 }
 
 func (ctx *Context) BecomeCandidate() {
-	ctx.setType(candidate)
+	ctx.setType(domain.CANDIDATE)
 	// TODO: do something with tickers
 }
 
 func (ctx *Context) BecomeLeader() {
-	ctx.setType(leader)
+	ctx.setType(domain.LEADER)
 	// TODO: do something with tickers}
 }
 
 func (ctx *Context) IsFollower() bool {
-	return ctx.hasType(follower)
+	return ctx.hasType(domain.FOLLOWER)
 }
 
 func (ctx *Context) IsCandidate() bool {
-	return ctx.hasType(candidate)
+	return ctx.hasType(domain.CANDIDATE)
 }
 
 func (ctx *Context) IsLeader() bool {
-	return ctx.hasType(leader)
+	return ctx.hasType(domain.LEADER)
 }
 
 func (ctx *Context) setType(target int) {

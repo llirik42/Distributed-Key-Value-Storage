@@ -3,7 +3,7 @@ package grpc
 import (
 	"context"
 	pb "distributed-algorithms/generated/proto"
-	"distributed-algorithms/raft/dto"
+	"distributed-algorithms/raft/domain"
 	"errors"
 	"google.golang.org/grpc"
 )
@@ -13,7 +13,7 @@ type Client struct {
 	gRPCConnection *grpc.ClientConn
 }
 
-func (client *Client) SendRequestForVote(request dto.RequestVoteRequest) (*dto.RequestVoteResponse, error) {
+func (client *Client) SendRequestForVote(request domain.RequestVoteRequest) (*domain.RequestVoteResponse, error) {
 	pbRequest := &pb.RequestVoteRequest{
 		Term:         request.Term,
 		CandidateId:  request.CandidateId,
@@ -27,7 +27,7 @@ func (client *Client) SendRequestForVote(request dto.RequestVoteRequest) (*dto.R
 		return nil, errors.Join(errors.New("failed to send request for vote: "+pbRequest.String()), pbErr)
 	}
 
-	response := dto.RequestVoteResponse{
+	response := domain.RequestVoteResponse{
 		Term:        pbResponse.Term,
 		VoteGranted: pbResponse.VoteGranted,
 	}
@@ -35,7 +35,7 @@ func (client *Client) SendRequestForVote(request dto.RequestVoteRequest) (*dto.R
 	return &response, nil
 }
 
-func (client *Client) SendAppendEntries(request dto.AppendEntriesRequest) (*dto.AppendEntriesResponse, error) {
+func (client *Client) SendAppendEntries(request domain.AppendEntriesRequest) (*domain.AppendEntriesResponse, error) {
 	// TODO: add retry policy?
 
 	pbRequest := &pb.AppendEntriesRequest{
@@ -52,7 +52,7 @@ func (client *Client) SendAppendEntries(request dto.AppendEntriesRequest) (*dto.
 		return nil, errors.Join(errors.New("failed to send append entries: "+pbRequest.String()), pbErr)
 	}
 
-	response := dto.AppendEntriesResponse{
+	response := domain.AppendEntriesResponse{
 		Term:    pbResponse.Term,
 		Success: pbResponse.Success,
 	}
@@ -60,6 +60,7 @@ func (client *Client) SendAppendEntries(request dto.AppendEntriesRequest) (*dto.
 	return &response, nil
 }
 
+// Close TODO: is this method ever used?
 func (client *Client) Close() error {
 	err := client.gRPCConnection.Close()
 

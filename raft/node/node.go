@@ -2,17 +2,19 @@ package node
 
 import (
 	"distributed-algorithms/raft"
+	"distributed-algorithms/raft/context"
 	"distributed-algorithms/raft/transport"
 	"log"
 )
 
 type Node struct {
+	ctx context.Context
 }
 
 func NewNode(serverFactory transport.ServerFactory, factory transport.ClientFactory) (*Node, error) {
-	var node *Node = nil
+	ctx := context.NewContext()
 
-	handler := raft.NewRequestHandler(node)
+	handler := raft.NewRequestHandler(ctx)
 
 	_, err := serverFactory.NewServer("0.0.0.0:8080", handler.HandleRequestVoteRequest, nil)
 	if err != nil {

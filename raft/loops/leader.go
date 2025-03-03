@@ -1,40 +1,40 @@
 package loops
 
 import (
-	"distributed-algorithms/raft/dto"
-	"distributed-algorithms/raft/node"
+	"distributed-algorithms/raft/context"
+	"distributed-algorithms/raft/domain"
 	"time"
 )
 
-func LeaderLoop(node *node.Context, ticker *time.Ticker) {
-	nodeId := node.GetId()
+func LeaderLoop(ctx *context.Context, ticker *time.Ticker) {
+	nodeId := ctx.GetNodeId()
 
 	for range ticker.C {
-		request := dto.AppendEntriesRequest{
-			Term:         node.GetCurrentTerm(),
-			LeaderId:     int32(nodeId),
+		request := domain.AppendEntriesRequest{
+			Term:         ctx.GetCurrentTerm(),
+			LeaderId:     nodeId,
 			PrevLogIndex: 0, // TODO
 			PrevLogTerm:  0, // TODO
 			LeaderCommit: 0, // TODO
 		}
 
 		// Sending heartbeat
-		for _, client := range node.GetClients() {
+		for _, client := range ctx.GetClients() {
 			go func() {
 				response, err := client.SendAppendEntries(request)
 
 				if err != nil {
 					// TODO: handle error
 				} else {
-					handleAppendEntriesResponse(node, response)
+					handleAppendEntriesResponse(ctx, response)
 				}
 			}()
 		}
 	}
 }
 
-func handleAppendEntriesResponse(node *node.Context, response *dto.AppendEntriesResponse) {
+func handleAppendEntriesResponse(ctx *context.Context, response *domain.AppendEntriesResponse) {
 	// TODO: add checks related to logs
 
-	node.CheckTerm(response.Term)
+	ctx.CheckTerm(response.Term)
 }

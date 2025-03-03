@@ -1,72 +1,72 @@
 package loops
 
 import (
-	"distributed-algorithms/raft/dto"
-	"distributed-algorithms/raft/node"
+	"distributed-algorithms/raft/context"
+	"distributed-algorithms/raft/domain"
 	"math/rand"
 	"time"
 )
 
-func FollowerCandidateLoop(node *node.Context, ticker *time.Ticker) {
+func FollowerCandidateLoop(ctx *context.Context, ticker *time.Ticker) {
 	minElectionTimeoutMs := 500
 	maxElectionTimeoutMs := 700
 
 	// TODO: избавиться от копипасты
 	for range ticker.C {
-		if node.IsFollower() {
-			node.BecomeCandidate()
+		if ctx.IsFollower() {
+			ctx.BecomeCandidate()
 
 			// Начать голосование
-			node.ResetVoteNumber()
-			currentTerm := node.IncrementCurrentTerm()
-			request := dto.RequestVoteRequest{
+			ctx.ResetVoteNumber()
+			currentTerm := ctx.IncrementCurrentTerm()
+			request := domain.RequestVoteRequest{
 				Term:         currentTerm,
-				CandidateId:  int32(node.GetId()),
+				CandidateId:  ctx.GetNodeId(),
 				LastLogIndex: 0,
 				LastLogTerm:  0,
 			}
 
 			// Sending requests for vote
-			for _, client := range node.GetClients() {
+			for _, client := range ctx.GetClients() {
 				go func() {
 					response, err := client.SendRequestForVote(request)
 
 					if err != nil {
 						// TODO: handle error
 					} else {
-						handleRequestForVoteResponse(node, response)
+						handleRequestForVoteResponse(ctx, response)
 					}
 				}()
 			}
-		} else if node.IsCandidate() {
+		} else if ctx.IsCandidate() {
 			// TODO: read from config
 			var nodeCount int32 = 5
 
-			if node.GetVoteNumber() > nodeCount/2 {
+			if ctx.GetVoteNumber() > nodeCount/2 {
 				// become leader and immediately send heartbeat
 			} else {
 				// Choose new election timeout
 				ticker.Reset(GetElectionTimeout(minElectionTimeoutMs, maxElectionTimeoutMs))
 
 				// Reset ticker to new random timeout
-				currentTerm := node.IncrementCurrentTerm()
+				currentTerm := ctx.IncrementCurrentTerm()
 
-				request := dto.RequestVoteRequest{
+				request := domain.RequestVoteRequest{
 					Term:         currentTerm,
-					CandidateId:  int32(node.GetId()),
+					CandidateId:  ctx.GetNodeId(),
 					LastLogIndex: 0,
 					LastLogTerm:  0,
 				}
 
 				// Sending requests for vote
-				for _, client := range node.GetClients() {
+				for _, client := range ctx.GetClients() {
 					go func() {
 						response, err := client.SendRequestForVote(request)
 
 						if err != nil {
 							// TODO: handle error
 						} else {
-							handleRequestForVoteResponse(node, response)
+							handleRequestForVoteResponse(ctx, response)
 						}
 					}()
 				}
@@ -75,7 +75,7 @@ func FollowerCandidateLoop(node *node.Context, ticker *time.Ticker) {
 	}
 }
 
-func handleRequestForVoteResponse(node *node.Context, response *dto.RequestVoteResponse) {
+func handleRequestForVoteResponse(node *context.Context, response *domain.RequestVoteResponse) {
 	node.CheckTerm(response.Term) // TODO: Check this in gRPC-interceptor
 
 	if response.VoteGranted {

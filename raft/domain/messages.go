@@ -1,8 +1,8 @@
-package dto
+package domain
 
 type RequestVoteRequest struct {
 	Term         int32
-	CandidateId  int32
+	CandidateId  uint32
 	LastLogIndex int32
 	LastLogTerm  int32
 }
@@ -13,7 +13,7 @@ type RequestVoteResponse struct {
 
 type AppendEntriesRequest struct {
 	Term         int32
-	LeaderId     int32
+	LeaderId     uint32
 	PrevLogIndex int32
 	PrevLogTerm  int32
 	LeaderCommit int32
