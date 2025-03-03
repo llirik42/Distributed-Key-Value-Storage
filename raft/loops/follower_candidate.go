@@ -10,8 +10,8 @@ import (
 func FollowerCandidateLoop(node *node.Node, ticker *time.Ticker) {
 	minElectionTimeoutMs := 500
 	maxElectionTimeoutMs := 700
-	duration := getElectionTimeout(minElectionTimeoutMs, maxElectionTimeoutMs)
 
+	// TODO: избавиться от копипасты
 	for range ticker.C {
 		if node.IsFollower() {
 			node.BecomeCandidate()
@@ -45,6 +45,10 @@ func FollowerCandidateLoop(node *node.Node, ticker *time.Ticker) {
 			if node.GetVoteNumber() > nodeCount/2 {
 				// become leader and immediately send heartbeat
 			} else {
+				// Choose new election timeout
+				ticker.Reset(GetElectionTimeout(minElectionTimeoutMs, maxElectionTimeoutMs))
+
+				// Reset ticker to new random timeout
 				currentTerm := node.IncrementCurrentTerm()
 
 				request := dto.RequestVoteRequest{
@@ -79,7 +83,7 @@ func handleRequestForVoteResponse(node *node.Node, response *dto.RequestVoteResp
 	}
 }
 
-func getElectionTimeout(minElectionTimeoutMs int, maxElectionTimeoutMs int) time.Duration {
+func GetElectionTimeout(minElectionTimeoutMs int, maxElectionTimeoutMs int) time.Duration {
 	electionTimeoutMs := rand.Intn(maxElectionTimeoutMs-minElectionTimeoutMs+1) + minElectionTimeoutMs
 	return getDurationMs(electionTimeoutMs)
 }
