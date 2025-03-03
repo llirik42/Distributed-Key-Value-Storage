@@ -5,16 +5,29 @@ import (
 	"log"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
+type HeartbeatInfo struct {
+	time     time.Time
+	leaderId Id
+}
+
+type Id int32
+
 type Node struct {
-	nodeId int32
+	nodeId   Id
+	votedFor Id
+
+	voteNumber atomic.Int32
 
 	nodeType      int
 	nodeTypeMutex sync.Mutex
 
-	currentTerm      atomic.Int32
-	currentTermMutex sync.Mutex
+	currentTerm atomic.Int32
+
+	candidateLoopTicker *time.Ticker
+	leaderLoopTicker    *time.Ticker
 
 	server transport.Server
 
@@ -27,16 +40,41 @@ func NewNode(serverFactory transport.ServerFactory, factory transport.ClientFact
 		return nil, err
 	}
 
+	// Init leader-ticker
+	//broadcastTimeoutMs := 100 // TODO
+	//duration := getDurationMs(broadcastTimeoutMs)
+
 	log.Println("Starting server")
 
 	return nil, nil
 }
 
 func (node *Node) Start() error {
+	node.nodeType = follower // is it necessary to use node.setType?
+
 	return node.server.Listen()
 }
 
-func (node *Node) GetId() int32 {
+func (node *Node) IncrementVoteNumber() {
+	node.voteNumber.Add(1)
+}
+
+func (node *Node) GetVoteNumber() int32 {
+	return node.voteNumber.Load()
+}
+
+func (node *Node) ResetVoteNumber() {
+	node.voteNumber.Store(1) // node votes for itself
+}
+
+func (node *Node) CheckTerm(term int32) {
+	if term > node.GetCurrentTerm() {
+		node.SetCurrentTerm(term)
+		node.BecomeFollower()
+	}
+}
+
+func (node *Node) GetId() Id {
 	return node.nodeId
 }
 
@@ -44,8 +82,8 @@ func (node *Node) SetCurrentTerm(value int32) {
 	node.currentTerm.Store(value)
 }
 
-func (node *Node) IncrementCurrentTerm() {
-	node.currentTerm.Add(1)
+func (node *Node) IncrementCurrentTerm() int32 {
+	return node.currentTerm.Add(1)
 }
 
 func (node *Node) GetCurrentTerm() int32 {

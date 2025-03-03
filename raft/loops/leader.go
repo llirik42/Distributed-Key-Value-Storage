@@ -6,28 +6,19 @@ import (
 	"time"
 )
 
-func LeaderLoop(node *node.Node) {
+func LeaderLoop(node *node.Node, ticker *time.Ticker) {
 	nodeId := node.GetId()
 
-	broadcastTimeoutMs := 100 // TODO
-	duration := getDurationMs(broadcastTimeoutMs)
-
-	for {
-		time.Sleep(duration)
-
-		// Node stopped being leader
-		if !node.IsLeader() {
-			break
-		}
-
-		// Sending heartbeat
+	for range ticker.C {
 		request := dto.AppendEntriesRequest{
 			Term:         node.GetCurrentTerm(),
-			LeaderId:     nodeId,
+			LeaderId:     int32(nodeId),
 			PrevLogIndex: 0, // TODO
 			PrevLogTerm:  0, // TODO
 			LeaderCommit: 0, // TODO
 		}
+
+		// Sending heartbeat
 		for _, client := range node.GetClients() {
 			go func() {
 				response, err := client.SendAppendEntries(request)
@@ -45,10 +36,5 @@ func LeaderLoop(node *node.Node) {
 func handleAppendEntriesResponse(node *node.Node, response *dto.AppendEntriesResponse) {
 	// TODO: add checks related to logs
 
-	responseTerm := response.Term
-
-	if responseTerm > node.GetCurrentTerm() {
-		node.SetCurrentTerm(responseTerm)
-		node.BecomeFollower()
-	}
+	node.CheckTerm(response.Term)
 }

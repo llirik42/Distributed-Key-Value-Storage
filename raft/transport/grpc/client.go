@@ -36,6 +36,8 @@ func (client *Client) SendRequestForVote(request dto.RequestVoteRequest) (*dto.R
 }
 
 func (client *Client) SendAppendEntries(request dto.AppendEntriesRequest) (*dto.AppendEntriesResponse, error) {
+	// TODO: add retry policy?
+
 	pbRequest := &pb.AppendEntriesRequest{
 		Term:         request.Term,
 		LeaderId:     request.LeaderId,
