@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func LeaderLoop(node *node.Node, ticker *time.Ticker) {
+func LeaderLoop(node *node.Context, ticker *time.Ticker) {
 	nodeId := node.GetId()
 
 	for range ticker.C {
@@ -33,7 +33,7 @@ func LeaderLoop(node *node.Node, ticker *time.Ticker) {
 	}
 }
 
-func handleAppendEntriesResponse(node *node.Node, response *dto.AppendEntriesResponse) {
+func handleAppendEntriesResponse(node *node.Context, response *dto.AppendEntriesResponse) {
 	// TODO: add checks related to logs
 
 	node.CheckTerm(response.Term)

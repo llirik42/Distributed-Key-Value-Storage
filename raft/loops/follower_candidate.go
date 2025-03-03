@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func FollowerCandidateLoop(node *node.Node, ticker *time.Ticker) {
+func FollowerCandidateLoop(node *node.Context, ticker *time.Ticker) {
 	minElectionTimeoutMs := 500
 	maxElectionTimeoutMs := 700
 
@@ -75,7 +75,7 @@ func FollowerCandidateLoop(node *node.Node, ticker *time.Ticker) {
 	}
 }
 
-func handleRequestForVoteResponse(node *node.Node, response *dto.RequestVoteResponse) {
+func handleRequestForVoteResponse(node *node.Context, response *dto.RequestVoteResponse) {
 	node.CheckTerm(response.Term) // TODO: Check this in gRPC-interceptor
 
 	if response.VoteGranted {
