@@ -61,7 +61,7 @@ func (ctx *Context) SetClients(clients []transport.Client) {
 
 func (ctx *Context) StartTickers() {
 	followerCandidateLoopTicker := time.NewTicker(getRandomElectionTimeout(&ctx.cfg))
-	leaderLoopTicker := time.NewTicker(getRandomElectionTimeout(&ctx.cfg))
+	leaderLoopTicker := time.NewTicker(getBroadcastTimeout(&ctx.cfg))
 
 	ctx.followerCandidateLoopTicker = followerCandidateLoopTicker
 	ctx.leaderLoopTicker = leaderLoopTicker
@@ -176,7 +176,7 @@ func (ctx *Context) GetCurrentTerm() int32 {
 func (ctx *Context) BecomeFollower() {
 	ctx.setRole(domain.FOLLOWER)
 	ctx.leaderLoopTicker.Stop()
-	ctx.followerCandidateLoopTicker.Reset(getRandomElectionTimeout(&ctx.cfg))
+	ctx.SetNewRandomElectionTimeout()
 }
 
 func (ctx *Context) BecomeCandidate() {
