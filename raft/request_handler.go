@@ -3,6 +3,7 @@ package raft
 import (
 	"distributed-algorithms/raft/context"
 	"distributed-algorithms/raft/domain"
+	"distributed-algorithms/raft/utils"
 )
 
 type RequestHandler struct {
@@ -33,8 +34,15 @@ func (handler *RequestHandler) HandleAppendEntriesRequest(request domain.AppendE
 	// TODO: add checks related to log entries
 
 	ctx := handler.ctx
+	utils.CheckTerm(ctx, request.Term)
+
 	currentTerm := ctx.GetCurrentTerm()
 	success := request.Term >= currentTerm
+
+	if success {
+		// Stable phase started
+		ctx.ResetVotedFor()
+	}
 
 	return &domain.AppendEntriesResponse{Term: currentTerm, Success: success}, nil
 }

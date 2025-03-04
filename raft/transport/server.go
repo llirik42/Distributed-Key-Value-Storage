@@ -9,6 +9,8 @@ type HandleAppendEntriesRequest func(request domain.AppendEntriesRequest) (*doma
 
 type Server interface {
 	Listen() error
+
+	Shutdown()
 }
 
 type ServerFactory interface {

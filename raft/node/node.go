@@ -1,41 +1,36 @@
 package node
 
 import (
+	"distributed-algorithms/config"
 	"distributed-algorithms/raft"
-	"distributed-algorithms/raft/domain"
+	"distributed-algorithms/raft/context"
 	"distributed-algorithms/raft/transport"
 	"log"
-	"sync"
-	"sync/atomic"
-	"time"
 )
 
 type Node struct {
-	currentTerm atomic.Int32
-
-	voted         bool // TODO В какой момент нужно сбросить?
-	votedFor      uint32
-	votedForMutex sync.Mutex
-
-	voteNumber atomic.Int32
-	id         uint32
-
-	role      int
-	roleMutex sync.Mutex
-
-	candidateLoopTicker *time.Ticker
-	leaderLoopTicker    *time.Ticker
-
-	server  transport.Server
-	clients []transport.Client
+	ctx *context.Context
 }
 
-func NewNode(serverFactory transport.ServerFactory, factory transport.ClientFactory) (*Node, error) {
-	handler := raft.NewRequestHandler(ctx)
+func NewNode(cfg config.RaftConfig, serverFactory transport.ServerFactory, clientFactory transport.ClientFactory) (*Node, error) {
+	ctx := context.NewContext(cfg)
+	requestHandler := raft.NewRequestHandler(ctx)
 
-	_, err := serverFactory.NewServer("0.0.0.0:8080", handler.HandleRequestVoteRequest, nil)
+	server, err := serverFactory.NewServer(cfg.SelfNode.Address, requestHandler.HandleRequestVoteRequest, requestHandler.HandleAppendEntriesRequest)
+	server
 	if err != nil {
 		return nil, err
+	}
+
+	var clients []transport.Client
+	for _, nodeAddress := range cfg.OtherNodes {
+		newClient, clientCreationErr := clientFactory.NewClient(nodeAddress)
+
+		if clientCreationErr != nil {
+			return nil, clientCreationErr
+		}
+
+		append(clients)
 	}
 
 	// Init leader-ticker
