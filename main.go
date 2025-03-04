@@ -5,38 +5,20 @@ import (
 	"distributed-algorithms/raft/node"
 	"distributed-algorithms/raft/transport/grpc"
 	"log"
+	"os"
 )
 
 func main() {
-	cfg1 := config.Config{RaftConfig: config.RaftConfig{
-		BroadcastTimeMs:      1000,
-		MinElectionTimeoutMs: 2000,
-		MaxElectionTimeoutMs: 3000,
-		OtherNodes:           []string{"localhost:8002"},
-		SelfNode: struct {
-			Address string `env:"SELF_ADDRESS,required"`
-			Id      string `env:"SELF_ID,required"`
-		}{Address: "localhost:8001", Id: "Node-1"},
-	}}
-	go func() {
-		err := node.StartNode(cfg1, grpc.ServerFactory{}, grpc.ClientFactory{})
-		if err != nil {
-			log.Fatal(err)
-		}
-	}()
+	args := os.Args
+	filePath := args[1]
 
-	cfg2 := config.Config{RaftConfig: config.RaftConfig{
-		BroadcastTimeMs:      1000,
-		MinElectionTimeoutMs: 2000,
-		MaxElectionTimeoutMs: 3000,
-		OtherNodes:           []string{"localhost:8001"},
-		SelfNode: struct {
-			Address string `env:"SELF_ADDRESS,required"`
-			Id      string `env:"SELF_ID,required"`
-		}{Address: "localhost:8002", Id: "Node-2"},
-	}}
-	err := node.StartNode(cfg2, grpc.ServerFactory{}, grpc.ClientFactory{})
-	if err != nil {
-		log.Fatal("Node-2: ", err)
+	cfg, err1 := config.NewConfiguration(filePath)
+	if err1 != nil {
+		log.Fatal(err1)
+	}
+
+	err2 := node.StartNode(*cfg, grpc.ServerFactory{}, grpc.ClientFactory{})
+	if err2 != nil {
+		log.Fatal(err2)
 	}
 }

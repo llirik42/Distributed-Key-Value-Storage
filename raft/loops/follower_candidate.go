@@ -61,8 +61,8 @@ func offerCandidacy(ctx *context.Context, currentTerm int32) {
 func handleRequestForVoteResponse(ctx *context.Context, response *domain.RequestVoteResponse) {
 	utils.CheckTerm(ctx, response.Term) // TODO: Check this in gRPC-interceptor
 
-	a, _ := json.Marshal(response)
-	log.Printf("Node \"%s\" received response of vote: %s", ctx.GetNodeId(), a)
+	a, _ := json.MarshalIndent(response, "", " ")
+	log.Printf("Node \"%s\" received response of vote: %s\n", ctx.GetNodeId(), a)
 
 	if response.VoteGranted {
 		ctx.IncrementVoteNumber()

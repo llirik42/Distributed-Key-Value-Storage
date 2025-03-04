@@ -20,8 +20,8 @@ func (handler *RequestHandler) HandleRequestVoteRequest(request domain.RequestVo
 
 	ctx := handler.ctx
 
-	a, _ := json.Marshal(request)
-	log.Printf("Node \"%s\" received request of vote: %s", ctx.GetNodeId(), a)
+	a, _ := json.MarshalIndent(request, "", " ")
+	log.Printf("Node \"%s\" received request of vote: %s\n", ctx.GetNodeId(), a)
 
 	currentTerm := ctx.GetCurrentTerm()
 	var voteGranted bool
@@ -40,8 +40,8 @@ func (handler *RequestHandler) HandleAppendEntriesRequest(request domain.AppendE
 
 	ctx := handler.ctx
 
-	a, _ := json.Marshal(request)
-	log.Printf("Node \"%s\" received request of append-entries: %s", ctx.GetNodeId(), a)
+	a, _ := json.MarshalIndent(request, "", " ")
+	log.Printf("Node \"%s\" received request of append-entries: %s\n", ctx.GetNodeId(), a)
 
 	currentTerm := ctx.GetCurrentTerm()
 	requestTerm := request.Term

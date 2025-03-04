@@ -33,8 +33,8 @@ func sendHeartbeat(ctx *context.Context) {
 func handleAppendEntriesResponse(ctx *context.Context, response *domain.AppendEntriesResponse) {
 	// TODO: add checks related to logs
 
-	a, _ := json.Marshal(response)
-	log.Printf("Node \"%s\" received response of append-entries: %s", ctx.GetNodeId(), a)
+	a, _ := json.MarshalIndent(response, "", " ")
+	log.Printf("Node \"%s\" received response of append-entries: %s\n", ctx.GetNodeId(), a)
 
 	utils.CheckTerm(ctx, response.Term) // TODO: Check this in gRPC-interceptor
 }

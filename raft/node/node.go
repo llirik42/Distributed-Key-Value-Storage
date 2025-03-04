@@ -6,6 +6,7 @@ import (
 	"distributed-algorithms/raft/context"
 	"distributed-algorithms/raft/loops"
 	"distributed-algorithms/raft/transport"
+	"encoding/json"
 	"log"
 )
 
@@ -64,7 +65,8 @@ func startRaftNode(config config.RaftConfig, raftServerFactory transport.ServerF
 	go loops.LeaderLoop(ctx)
 	go loops.FollowerCandidateLoop(ctx)
 
-	log.Printf("Node \"%s\" is starting ...", config.SelfNode.Id)
+	a, _ := json.MarshalIndent(config, "", " ")
+	log.Printf("Node is starting with configuration %s\n", a)
 
 	listenErr := server.Listen()
 	if listenErr != nil {
