@@ -9,32 +9,67 @@ import (
 )
 
 type Context struct {
-	nodeId uint32
+	currentTerm atomic.Int32
 
 	voted         bool // TODO В какой момент нужно сбросить?
 	votedFor      uint32
 	votedForMutex sync.Mutex
+	voteNumber    atomic.Int32
 
-	voteNumber atomic.Int32
-
-	nodeType      int
-	nodeTypeMutex sync.Mutex
-
-	currentTerm atomic.Int32
+	nodeId        uint32
+	nodeRole      int
+	nodeRoleMutex sync.Mutex
 
 	candidateLoopTicker *time.Ticker
 	leaderLoopTicker    *time.Ticker
 
+	server  transport.Server
 	clients []transport.Client
 }
 
 func NewContext() *Context {
-	// TODO: init all fields
+	ctx := &Context{
+		currentTerm:   atomic.Int32{},
+		voted:         false,
+		votedFor:      0, // Doesn't matter when voted = false
+		votedForMutex: sync.Mutex{},
+		voteNumber:    atomic.Int32{},
+	}
 
-	ctx := &Context{}
-
-	ctx.nodeType = domain.FOLLOWER // is it necessary to use ctx.setType here?
 	return ctx
+}
+
+func (ctx *Context) GetClients() []transport.Client {
+	return ctx.clients
+}
+
+func (ctx *Context) GetNodeId() uint32 {
+	return ctx.nodeId
+}
+
+func (ctx *Context) IsFollower() bool {
+	return ctx.hasType(domain.FOLLOWER)
+}
+
+func (ctx *Context) IsCandidate() bool {
+	return ctx.hasType(domain.CANDIDATE)
+}
+
+func (ctx *Context) IsLeader() bool {
+	return ctx.hasType(domain.LEADER)
+}
+
+func (ctx *Context) setRole(target int) {
+	ctx.nodeRoleMutex.Lock()
+	ctx.nodeRole = target
+	ctx.nodeRoleMutex.Unlock()
+}
+
+func (ctx *Context) hasType(target int) bool {
+	ctx.nodeRoleMutex.Lock()
+	result := ctx.nodeRole == target
+	ctx.nodeRoleMutex.Unlock()
+	return result
 }
 
 func (ctx *Context) ResetVote() {
@@ -63,6 +98,11 @@ func (ctx *Context) Vote(candidateId uint32) bool {
 	return result
 }
 
+func (ctx *Context) VoteForMyself() bool {
+	result := ctx.Vote(ctx.GetNodeId())
+
+}
+
 func (ctx *Context) IncrementVoteNumber() {
 	ctx.voteNumber.Add(1)
 }
@@ -72,7 +112,7 @@ func (ctx *Context) GetVoteNumber() int32 {
 }
 
 func (ctx *Context) ResetVoteNumber() {
-	ctx.voteNumber.Store(1) // ctx votes for itself
+	ctx.voteNumber.Store(1) // node votes for itself
 }
 
 func (ctx *Context) CheckTerm(term int32) {
@@ -80,10 +120,6 @@ func (ctx *Context) CheckTerm(term int32) {
 		ctx.SetCurrentTerm(term)
 		ctx.BecomeFollower()
 	}
-}
-
-func (ctx *Context) GetNodeId() uint32 {
-	return ctx.nodeId
 }
 
 func (ctx *Context) SetCurrentTerm(value int32) {
@@ -98,46 +134,17 @@ func (ctx *Context) GetCurrentTerm() int32 {
 	return ctx.currentTerm.Load()
 }
 
-func (ctx *Context) GetClients() []transport.Client {
-	return ctx.clients
-}
-
 func (ctx *Context) BecomeFollower() {
-	ctx.setType(domain.FOLLOWER)
+	ctx.setRole(domain.FOLLOWER)
 	// TODO: do something with tickers
 }
 
 func (ctx *Context) BecomeCandidate() {
-	ctx.setType(domain.CANDIDATE)
+	ctx.setRole(domain.CANDIDATE)
 	// TODO: do something with tickers
 }
 
 func (ctx *Context) BecomeLeader() {
-	ctx.setType(domain.LEADER)
+	ctx.setRole(domain.LEADER)
 	// TODO: do something with tickers}
-}
-
-func (ctx *Context) IsFollower() bool {
-	return ctx.hasType(domain.FOLLOWER)
-}
-
-func (ctx *Context) IsCandidate() bool {
-	return ctx.hasType(domain.CANDIDATE)
-}
-
-func (ctx *Context) IsLeader() bool {
-	return ctx.hasType(domain.LEADER)
-}
-
-func (ctx *Context) setType(target int) {
-	ctx.nodeTypeMutex.Lock()
-	ctx.nodeType = target
-	ctx.nodeTypeMutex.Unlock()
-}
-
-func (ctx *Context) hasType(target int) bool {
-	ctx.nodeTypeMutex.Lock()
-	result := ctx.nodeType == target
-	ctx.nodeTypeMutex.Unlock()
-	return result
 }

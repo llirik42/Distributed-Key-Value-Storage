@@ -17,6 +17,8 @@ func FollowerCandidateLoop(ctx *context.Context, ticker *time.Ticker) {
 			ctx.BecomeCandidate()
 
 			// Начать голосование
+
+			// TODO: изменить votedFor на свой Id
 			ctx.ResetVoteNumber()
 			currentTerm := ctx.IncrementCurrentTerm()
 			request := domain.RequestVoteRequest{
@@ -49,8 +51,9 @@ func FollowerCandidateLoop(ctx *context.Context, ticker *time.Ticker) {
 				ticker.Reset(GetElectionTimeout(minElectionTimeoutMs, maxElectionTimeoutMs))
 
 				// Reset ticker to new random timeout
+				// TODO: изменить votedFor на свой Id
+				ctx.ResetVoteNumber()
 				currentTerm := ctx.IncrementCurrentTerm()
-
 				request := domain.RequestVoteRequest{
 					Term:         currentTerm,
 					CandidateId:  ctx.GetNodeId(),
@@ -75,11 +78,11 @@ func FollowerCandidateLoop(ctx *context.Context, ticker *time.Ticker) {
 	}
 }
 
-func handleRequestForVoteResponse(node *context.Context, response *domain.RequestVoteResponse) {
-	node.CheckTerm(response.Term) // TODO: Check this in gRPC-interceptor
+func handleRequestForVoteResponse(ctx *context.Context, response *domain.RequestVoteResponse) {
+	ctx.CheckTerm(response.Term) // TODO: Check this in gRPC-interceptor
 
 	if response.VoteGranted {
-		node.IncrementVoteNumber()
+		ctx.IncrementVoteNumber()
 	}
 }
 
