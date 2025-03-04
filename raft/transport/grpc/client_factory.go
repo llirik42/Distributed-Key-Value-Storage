@@ -10,7 +10,7 @@ import (
 
 type ClientFactory struct{}
 
-func (factory ClientFactory) NewClient(address string) (*transport.Client, error) {
+func (factory ClientFactory) NewClient(address string) (transport.Client, error) {
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	}
@@ -26,7 +26,5 @@ func (factory ClientFactory) NewClient(address string) (*transport.Client, error
 		gRPCConnection: gRPCConnection,
 	}
 
-	var transportClient transport.Client = client
-
-	return &transportClient, nil
+	return client, nil
 }

@@ -5,39 +5,63 @@ import (
 	"distributed-algorithms/raft"
 	"distributed-algorithms/raft/context"
 	"distributed-algorithms/raft/transport"
-	"log"
 )
 
-type Node struct {
-	ctx *context.Context
+func StartNode(config config.Config, raftServerFactory transport.ServerFactory, raftClientFactory transport.ClientFactory) error {
+	err := startRaftNode(config.RaftConfig, raftServerFactory, raftClientFactory)
+
+	if err != nil {
+		// TODO: handle
+		return err
+	}
+
+	return nil
 }
 
-func NewNode(cfg config.RaftConfig, serverFactory transport.ServerFactory, clientFactory transport.ClientFactory) (*Node, error) {
-	ctx := context.NewContext(cfg)
+func startRaftNode(config config.RaftConfig, raftServerFactory transport.ServerFactory, raftClientFactory transport.ClientFactory) error {
+	ctx := context.NewContext(config)
 	requestHandler := raft.NewRequestHandler(ctx)
 
-	server, err := serverFactory.NewServer(cfg.SelfNode.Address, requestHandler.HandleRequestVoteRequest, requestHandler.HandleAppendEntriesRequest)
-	server
+	server, err := raftServerFactory.NewServer(config.SelfNode.Address, requestHandler.HandleRequestVoteRequest, requestHandler.HandleAppendEntriesRequest)
 	if err != nil {
-		return nil, err
+		// TODO: handle error
+		return err
 	}
+	defer func(server transport.Server) {
+		err := server.Shutdown()
+		if err != nil {
+			// TODO: handle error
+		}
+	}(server)
 
 	var clients []transport.Client
-	for _, nodeAddress := range cfg.OtherNodes {
-		newClient, clientCreationErr := clientFactory.NewClient(nodeAddress)
+
+	// Create connections to other nodes
+	for _, nodeAddress := range config.OtherNodes {
+		newClient, clientCreationErr := raftClientFactory.NewClient(nodeAddress)
 
 		if clientCreationErr != nil {
-			return nil, clientCreationErr
+			// TODO: handle error
 		}
 
-		append(clients)
+		defer func(newClient transport.Client) {
+			err := newClient.Close()
+			if err != nil {
+				// TODO: handle error
+			}
+		}(newClient)
+
+		clients = append(clients, newClient)
 	}
 
-	// Init leader-ticker
-	//broadcastTimeoutMs := 100 // TODO
-	//duration := getDurationMs(broadcastTimeoutMs)
+	ctx.SetServer(&server)
+	ctx.SetClients(clients)
 
-	log.Println("Starting server")
+	listenErr := server.Listen()
+	if listenErr != nil {
+		// TODO: handle error
+		return listenErr
+	}
 
-	return nil, nil
+	return nil
 }

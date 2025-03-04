@@ -10,9 +10,9 @@ type HandleAppendEntriesRequest func(request domain.AppendEntriesRequest) (*doma
 type Server interface {
 	Listen() error
 
-	Shutdown()
+	Shutdown() error
 }
 
 type ServerFactory interface {
-	NewServer(address string, handleRequestForVoteRequest HandleRequestForVoteRequest, handleAppendEntriesRequest HandleAppendEntriesRequest) (*Server, error)
+	NewServer(address string, handleRequestForVoteRequest HandleRequestForVoteRequest, handleAppendEntriesRequest HandleAppendEntriesRequest) (Server, error)
 }

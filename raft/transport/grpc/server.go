@@ -59,6 +59,7 @@ func (server *Server) Listen() error {
 	return nil
 }
 
-func (server *Server) Shutdown() {
+func (server *Server) Shutdown() error {
 	server.gRPCServer.GracefulStop()
+	return nil
 }

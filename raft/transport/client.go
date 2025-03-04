@@ -16,5 +16,5 @@ type Client interface {
 }
 
 type ClientFactory interface {
-	NewClient(address string) (*Client, error)
+	NewClient(address string) (Client, error)
 }

@@ -11,7 +11,7 @@ import (
 
 type ServerFactory struct{}
 
-func (factory ServerFactory) NewServer(address string, handleRequestForVoteRequest transport.HandleRequestForVoteRequest, handleAppendEntriesRequest transport.HandleAppendEntriesRequest) (*transport.Server, error) {
+func (factory ServerFactory) NewServer(address string, handleRequestForVoteRequest transport.HandleRequestForVoteRequest, handleAppendEntriesRequest transport.HandleAppendEntriesRequest) (transport.Server, error) {
 	listener, err := net.Listen("tcp", address)
 
 	if err != nil {
@@ -30,7 +30,5 @@ func (factory ServerFactory) NewServer(address string, handleRequestForVoteReque
 	pb.RegisterRaftServiceServer(gRPCServer, server)
 	reflection.Register(gRPCServer)
 
-	var transportServer transport.Server = server
-
-	return &transportServer, nil
+	return server, nil
 }
