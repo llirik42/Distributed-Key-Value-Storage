@@ -3,7 +3,6 @@ package raft
 import (
 	"distributed-algorithms/raft/context"
 	"distributed-algorithms/raft/domain"
-	"distributed-algorithms/raft/utils"
 	"encoding/json"
 	"log"
 )
@@ -40,17 +39,19 @@ func (handler *RequestHandler) HandleAppendEntriesRequest(request domain.AppendE
 	// TODO: add checks related to log entries
 
 	ctx := handler.ctx
-	utils.CheckTerm(ctx, request.Term)
 
 	a, _ := json.Marshal(request)
 	log.Printf("Node \"%s\" received request of append-entries: %s", ctx.GetNodeId(), a)
 
 	currentTerm := ctx.GetCurrentTerm()
-	success := request.Term >= currentTerm
+	requestTerm := request.Term
+	success := requestTerm >= currentTerm
 
 	if success {
 		// Stable phase started
+		ctx.BecomeFollower()
 		ctx.ResetVotedFor()
+		ctx.SetCurrentTerm(requestTerm)
 	}
 
 	return &domain.AppendEntriesResponse{Term: currentTerm, Success: success}, nil
