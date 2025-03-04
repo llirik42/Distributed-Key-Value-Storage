@@ -4,6 +4,7 @@ import (
 	"distributed-algorithms/raft/context"
 	"distributed-algorithms/raft/domain"
 	"distributed-algorithms/raft/utils"
+	"encoding/json"
 	"log"
 )
 
@@ -20,7 +21,8 @@ func (handler *RequestHandler) HandleRequestVoteRequest(request domain.RequestVo
 
 	ctx := handler.ctx
 
-	log.Printf("Node \"%s\" received request of vote: %v", ctx.GetNodeId(), request)
+	a, _ := json.Marshal(request)
+	log.Printf("Node \"%s\" received request of vote: %s", ctx.GetNodeId(), a)
 
 	currentTerm := ctx.GetCurrentTerm()
 	var voteGranted bool
@@ -40,7 +42,8 @@ func (handler *RequestHandler) HandleAppendEntriesRequest(request domain.AppendE
 	ctx := handler.ctx
 	utils.CheckTerm(ctx, request.Term)
 
-	log.Printf("Node \"%s\" received request of append-entries: %v", ctx.GetNodeId(), request)
+	a, _ := json.Marshal(request)
+	log.Printf("Node \"%s\" received request of append-entries: %s", ctx.GetNodeId(), a)
 
 	currentTerm := ctx.GetCurrentTerm()
 	success := request.Term >= currentTerm
