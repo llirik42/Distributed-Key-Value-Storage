@@ -4,6 +4,7 @@ import (
 	"distributed-algorithms/config"
 	"distributed-algorithms/raft"
 	"distributed-algorithms/raft/context"
+	"distributed-algorithms/raft/loops"
 	"distributed-algorithms/raft/transport"
 )
 
@@ -56,6 +57,11 @@ func startRaftNode(config config.RaftConfig, raftServerFactory transport.ServerF
 
 	ctx.SetServer(&server)
 	ctx.SetClients(clients)
+
+	ctx.StartTickers()
+	ctx.BecomeFollower()
+	go loops.LeaderLoop(ctx)
+	go loops.FollowerCandidateLoop(ctx)
 
 	listenErr := server.Listen()
 	if listenErr != nil {

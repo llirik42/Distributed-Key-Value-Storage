@@ -32,9 +32,6 @@ type Context struct {
 }
 
 func NewContext(cfg config.RaftConfig) *Context {
-	followerCandidateLoopTicker := time.NewTicker(getRandomElectionTimeout(&cfg))
-	leaderLoopTicker := time.NewTicker(getRandomElectionTimeout(&cfg))
-
 	ctx := &Context{
 		cfg:                         cfg,
 		currentTerm:                 atomic.Int32{},
@@ -45,8 +42,8 @@ func NewContext(cfg config.RaftConfig) *Context {
 		nodeId:                      cfg.SelfNode.Id,
 		nodeRole:                    domain.FOLLOWER,
 		nodeRoleMutex:               sync.Mutex{},
-		followerCandidateLoopTicker: followerCandidateLoopTicker,
-		leaderLoopTicker:            leaderLoopTicker,
+		followerCandidateLoopTicker: nil,
+		leaderLoopTicker:            nil,
 		server:                      nil,
 		clients:                     nil,
 	}
@@ -60,6 +57,22 @@ func (ctx *Context) SetServer(server *transport.Server) {
 
 func (ctx *Context) SetClients(clients []transport.Client) {
 	ctx.clients = clients
+}
+
+func (ctx *Context) StartTickers() {
+	followerCandidateLoopTicker := time.NewTicker(getRandomElectionTimeout(&ctx.cfg))
+	leaderLoopTicker := time.NewTicker(getRandomElectionTimeout(&ctx.cfg))
+
+	ctx.followerCandidateLoopTicker = followerCandidateLoopTicker
+	ctx.leaderLoopTicker = leaderLoopTicker
+}
+
+func (ctx *Context) GetFollowerCandidateLoopTicker() *time.Ticker {
+	return ctx.followerCandidateLoopTicker
+}
+
+func (ctx *Context) GetLeaderLoopTicker() *time.Ticker {
+	return ctx.leaderLoopTicker
 }
 
 func (ctx *Context) SetNewRandomElectionTimeout() {

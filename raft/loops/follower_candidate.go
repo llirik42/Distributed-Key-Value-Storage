@@ -4,18 +4,20 @@ import (
 	"distributed-algorithms/raft/context"
 	"distributed-algorithms/raft/domain"
 	"distributed-algorithms/raft/utils"
-	"time"
 )
 
-func FollowerCandidateLoop(ctx *context.Context, ticker *time.Ticker) {
+func FollowerCandidateLoop(ctx *context.Context) {
+	ticker := ctx.GetFollowerCandidateLoopTicker()
+
 	for range ticker.C {
 		if ctx.IsFollower() {
 			ctx.BecomeCandidate()
 			startNewTerm(ctx)
 		} else if ctx.IsCandidate() {
 			clusterSize := ctx.GetClusterSize()
+			voteNumber := int(ctx.GetVoteNumber())
 
-			if ctx.GetVoteNumber() > clusterSize/2 {
+			if voteNumber > clusterSize/2 {
 				ctx.BecomeLeader()
 				sendHeartbeat(ctx)
 			} else {
