@@ -4,6 +4,7 @@ import (
 	"distributed-algorithms/raft/context"
 	"distributed-algorithms/raft/domain"
 	"distributed-algorithms/raft/utils"
+	"log"
 )
 
 func sendHeartbeat(ctx *context.Context) {
@@ -30,6 +31,8 @@ func sendHeartbeat(ctx *context.Context) {
 
 func handleAppendEntriesResponse(ctx *context.Context, response *domain.AppendEntriesResponse) {
 	// TODO: add checks related to logs
+
+	log.Printf("Node \"%s\" received response of append-entries: %v", ctx.GetNodeId(), response)
 
 	utils.CheckTerm(ctx, response.Term) // TODO: Check this in gRPC-interceptor
 }

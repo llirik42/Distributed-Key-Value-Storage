@@ -4,6 +4,7 @@ import (
 	"distributed-algorithms/raft/context"
 	"distributed-algorithms/raft/domain"
 	"distributed-algorithms/raft/utils"
+	"log"
 )
 
 type RequestHandler struct {
@@ -18,6 +19,9 @@ func (handler *RequestHandler) HandleRequestVoteRequest(request domain.RequestVo
 	// TODO: add checks about candidate's log
 
 	ctx := handler.ctx
+
+	log.Printf("Node \"%s\" received request of vote: %v", ctx.GetNodeId(), request)
+
 	currentTerm := ctx.GetCurrentTerm()
 	var voteGranted bool
 
@@ -35,6 +39,8 @@ func (handler *RequestHandler) HandleAppendEntriesRequest(request domain.AppendE
 
 	ctx := handler.ctx
 	utils.CheckTerm(ctx, request.Term)
+
+	log.Printf("Node \"%s\" received request of append-entries: %v", ctx.GetNodeId(), request)
 
 	currentTerm := ctx.GetCurrentTerm()
 	success := request.Term >= currentTerm

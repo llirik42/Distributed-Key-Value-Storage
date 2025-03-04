@@ -6,6 +6,7 @@ import (
 	"distributed-algorithms/raft/context"
 	"distributed-algorithms/raft/loops"
 	"distributed-algorithms/raft/transport"
+	"log"
 )
 
 func StartNode(config config.Config, raftServerFactory transport.ServerFactory, raftClientFactory transport.ClientFactory) error {
@@ -62,6 +63,8 @@ func startRaftNode(config config.RaftConfig, raftServerFactory transport.ServerF
 	ctx.BecomeFollower()
 	go loops.LeaderLoop(ctx)
 	go loops.FollowerCandidateLoop(ctx)
+
+	log.Printf("Node \"%s\" is starting ...", config.SelfNode.Id)
 
 	listenErr := server.Listen()
 	if listenErr != nil {
