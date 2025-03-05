@@ -126,20 +126,18 @@ func (ctx *Context) Vote(candidateId string) bool {
 	ctx.votedForMutex.Lock()
 	defer ctx.votedForMutex.Unlock()
 
-	// Whether node votes for itself
-	if ctx.nodeId == candidateId {
-		ctx.votedFor = candidateId
-		ctx.voted = true
-		ctx.IncrementVoteNumber()
-		return true
-	}
-
 	var result bool
 
 	if !ctx.voted {
 		ctx.votedFor = candidateId
 		ctx.voted = true
 		result = true
+
+		if candidateId == ctx.nodeId {
+			// Node is a candidate and successfully votes for itself
+			// Vote number must be persistent. If it's not, this condition must be added to case "ctx.voted"
+			ctx.IncrementVoteNumber()
+		}
 	} else {
 		// If the candidate we voted for falls, we'll again vote for it
 		// If result = false, in this case we won't vote for the candidate
