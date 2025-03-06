@@ -23,9 +23,9 @@ func StartNode(config config.Config, raftServerFactory transport.ServerFactory, 
 
 func startRaftNode(config config.RaftConfig, raftServerFactory transport.ServerFactory, raftClientFactory transport.ClientFactory) error {
 	ctx := context.NewContext(config)
-	requestHandler := raft.NewRequestHandler(ctx)
+	messageHandler := raft.NewMessageHandler(ctx)
 
-	server, err := raftServerFactory.NewServer(config.SelfNode.Address, requestHandler.HandleRequestVoteRequest, requestHandler.HandleAppendEntriesRequest)
+	server, err := raftServerFactory.NewServer(config.SelfNode.Address, messageHandler.HandleRequestVoteRequest, messageHandler.HandleAppendEntriesRequest)
 	if err != nil {
 		// TODO: handle error
 		return err
@@ -41,7 +41,7 @@ func startRaftNode(config config.RaftConfig, raftServerFactory transport.ServerF
 
 	// Create connections to other nodes
 	for _, nodeAddress := range config.OtherNodes {
-		newClient, clientCreationErr := raftClientFactory.NewClient(nodeAddress)
+		newClient, clientCreationErr := raftClientFactory.NewClient(nodeAddress, messageHandler.HandleRequestVoteResponse, messageHandler.HandleAppendEntriesResponse)
 
 		if clientCreationErr != nil {
 			// TODO: handle error

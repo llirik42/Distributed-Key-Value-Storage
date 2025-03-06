@@ -4,16 +4,19 @@ import (
 	"context"
 	pb "distributed-algorithms/generated/proto"
 	"distributed-algorithms/raft/domain"
+	"distributed-algorithms/raft/transport"
 	"errors"
 	"google.golang.org/grpc"
 )
 
 type Client struct {
-	gRPCClient     pb.RaftServiceClient
-	gRPCConnection *grpc.ClientConn
+	gRPCClient                   pb.RaftServiceClient
+	gRPCConnection               *grpc.ClientConn
+	handleRequestForVoteResponse transport.HandleRequestForVoteResponse
+	handleAppendEntriesResponse  transport.HandleAppendEntriesResponse
 }
 
-func (client *Client) SendRequestForVote(request domain.RequestVoteRequest) (*domain.RequestVoteResponse, error) {
+func (client *Client) SendRequestForVote(request domain.RequestVoteRequest) error {
 	pbRequest := &pb.RequestVoteRequest{
 		Term:         request.Term,
 		CandidateId:  request.CandidateId,
@@ -24,7 +27,7 @@ func (client *Client) SendRequestForVote(request domain.RequestVoteRequest) (*do
 	pbResponse, pbErr := client.gRPCClient.RequestForVote(context.Background(), pbRequest)
 
 	if pbErr != nil {
-		return nil, errors.Join(errors.New("failed to send request for vote: "+pbRequest.String()), pbErr)
+		return errors.Join(errors.New("failed to send request for vote: "+pbRequest.String()), pbErr)
 	}
 
 	response := domain.RequestVoteResponse{
@@ -32,10 +35,10 @@ func (client *Client) SendRequestForVote(request domain.RequestVoteRequest) (*do
 		VoteGranted: pbResponse.VoteGranted,
 	}
 
-	return &response, nil
+	return client.handleRequestForVoteResponse(&response)
 }
 
-func (client *Client) SendAppendEntries(request domain.AppendEntriesRequest) (*domain.AppendEntriesResponse, error) {
+func (client *Client) SendAppendEntries(request domain.AppendEntriesRequest) error {
 	// TODO: add retry policy?
 
 	pbRequest := &pb.AppendEntriesRequest{
@@ -49,7 +52,7 @@ func (client *Client) SendAppendEntries(request domain.AppendEntriesRequest) (*d
 	pbResponse, pbErr := client.gRPCClient.AppendEntries(context.Background(), pbRequest)
 
 	if pbErr != nil {
-		return nil, errors.Join(errors.New("failed to send append entries: "+pbRequest.String()), pbErr)
+		return errors.Join(errors.New("failed to send append entries: "+pbRequest.String()), pbErr)
 	}
 
 	response := domain.AppendEntriesResponse{
@@ -57,10 +60,9 @@ func (client *Client) SendAppendEntries(request domain.AppendEntriesRequest) (*d
 		Success: pbResponse.Success,
 	}
 
-	return &response, nil
+	return client.handleAppendEntriesResponse(&response)
 }
 
-// Close TODO: is this method ever used?
 func (client *Client) Close() error {
 	err := client.gRPCConnection.Close()
 

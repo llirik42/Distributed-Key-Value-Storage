@@ -10,7 +10,7 @@ import (
 
 type ClientFactory struct{}
 
-func (factory ClientFactory) NewClient(address string) (transport.Client, error) {
+func (factory ClientFactory) NewClient(address string, handleRequestForVoteResponse transport.HandleRequestForVoteResponse, handleAppendEntriesResponse transport.HandleAppendEntriesResponse) (transport.Client, error) {
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	}
@@ -22,8 +22,10 @@ func (factory ClientFactory) NewClient(address string) (transport.Client, error)
 	}
 
 	client := &Client{
-		gRPCClient:     pb.NewRaftServiceClient(gRPCConnection),
-		gRPCConnection: gRPCConnection,
+		gRPCClient:                   pb.NewRaftServiceClient(gRPCConnection),
+		gRPCConnection:               gRPCConnection,
+		handleRequestForVoteResponse: handleRequestForVoteResponse,
+		handleAppendEntriesResponse:  handleAppendEntriesResponse,
 	}
 
 	return client, nil

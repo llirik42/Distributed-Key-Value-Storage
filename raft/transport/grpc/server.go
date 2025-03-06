@@ -19,7 +19,7 @@ type Server struct {
 }
 
 func (server *Server) RequestForVote(_ context.Context, request *pb.RequestVoteRequest) (*pb.RequestVoteResponse, error) {
-	result, err := server.handleRequestForVoteRequest(domain.RequestVoteRequest{
+	result, err := server.handleRequestForVoteRequest(&domain.RequestVoteRequest{
 		Term:         request.Term,
 		CandidateId:  request.CandidateId,
 		LastLogIndex: request.LastLogIndex,
@@ -34,7 +34,7 @@ func (server *Server) RequestForVote(_ context.Context, request *pb.RequestVoteR
 }
 
 func (server *Server) AppendEntries(_ context.Context, request *pb.AppendEntriesRequest) (*pb.AppendEntriesResponse, error) {
-	result, err := server.handleAppendEntriesRequest(domain.AppendEntriesRequest{
+	result, err := server.handleAppendEntriesRequest(&domain.AppendEntriesRequest{
 		Term:         request.Term,
 		LeaderId:     request.LeaderId,
 		PrevLogIndex: request.PrevLogIndex,

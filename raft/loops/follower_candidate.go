@@ -3,9 +3,6 @@ package loops
 import (
 	"distributed-algorithms/raft/context"
 	"distributed-algorithms/raft/domain"
-	"distributed-algorithms/raft/utils"
-	"encoding/json"
-	"log"
 )
 
 func FollowerCandidateLoop(ctx *context.Context) {
@@ -16,6 +13,7 @@ func FollowerCandidateLoop(ctx *context.Context) {
 			ctx.BecomeCandidate()
 			startNewTerm(ctx)
 		} else if ctx.IsCandidate() {
+			// TODO: становиться лидером и слать heartbeat нужно не здесь, а сразу при получении очередного положительного ответа на ReqeustForVote
 			clusterSize := ctx.GetClusterSize()
 			voteNumber := int(ctx.GetVoteNumber())
 
@@ -47,24 +45,11 @@ func offerCandidacy(ctx *context.Context, currentTerm int32) {
 
 	for _, client := range ctx.GetClients() {
 		go func() {
-			response, err := client.SendRequestForVote(request)
+			err := client.SendRequestForVote(request)
 
 			if err != nil {
 				// TODO: handle error
-			} else {
-				handleRequestForVoteResponse(ctx, response)
 			}
 		}()
-	}
-}
-
-func handleRequestForVoteResponse(ctx *context.Context, response *domain.RequestVoteResponse) {
-	utils.CheckTerm(ctx, response.Term) // TODO: Check this in gRPC-interceptor
-
-	a, _ := json.MarshalIndent(response, "", " ")
-	log.Printf("Node \"%s\" received response of vote: %s\n", ctx.GetNodeId(), a)
-
-	if response.VoteGranted {
-		ctx.IncrementVoteNumber()
 	}
 }
