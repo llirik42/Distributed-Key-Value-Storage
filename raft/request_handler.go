@@ -55,7 +55,6 @@ func (handler *RequestHandler) HandleAppendEntriesRequest(request domain.AppendE
 		// Stable phase started
 		ctx.SetNewRandomElectionTimeout()
 		ctx.BecomeFollower()
-		ctx.ResetVotedFor()
 		ctx.SetCurrentTerm(requestTerm)
 	}
 

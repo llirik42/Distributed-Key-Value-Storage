@@ -161,9 +161,11 @@ func (ctx *Context) GetVoteNumber() uint32 {
 
 func (ctx *Context) SetCurrentTerm(value int32) {
 	ctx.currentTerm.Store(value)
+	ctx.ResetVotedFor()
 }
 
 func (ctx *Context) IncrementCurrentTerm() int32 {
+	ctx.ResetVoteNumber()
 	return ctx.currentTerm.Add(1)
 }
 
