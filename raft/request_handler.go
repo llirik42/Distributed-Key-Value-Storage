@@ -33,7 +33,7 @@ func (handler *RequestHandler) HandleRequestVoteRequest(request domain.RequestVo
 	}
 
 	if voteGranted {
-		ctx.SetNewRandomElectionTimeout()
+		ctx.ResetNewElectionTimeout()
 	}
 
 	return &domain.RequestVoteResponse{Term: currentTerm, VoteGranted: voteGranted}, nil
@@ -53,7 +53,6 @@ func (handler *RequestHandler) HandleAppendEntriesRequest(request domain.AppendE
 
 	if success {
 		// Stable phase started
-		ctx.SetNewRandomElectionTimeout()
 		ctx.BecomeFollower()
 		ctx.SetCurrentTerm(requestTerm)
 	}

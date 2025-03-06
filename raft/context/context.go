@@ -15,10 +15,11 @@ type Context struct {
 
 	currentTerm atomic.Int32
 
-	voted         bool
-	votedFor      string
-	votedForMutex sync.Mutex
-	voteNumber    atomic.Uint32
+	voted     bool
+	votedFor  string
+	voteMutex sync.Mutex
+
+	voteNumber atomic.Uint32
 
 	nodeId        string
 	nodeRole      int
@@ -37,7 +38,7 @@ func NewContext(cfg config.RaftConfig) *Context {
 		currentTerm:                 atomic.Int32{},
 		voted:                       false,
 		votedFor:                    "",
-		votedForMutex:               sync.Mutex{},
+		voteMutex:                   sync.Mutex{},
 		voteNumber:                  atomic.Uint32{},
 		nodeId:                      cfg.SelfNode.Id,
 		nodeRole:                    domain.FOLLOWER,
@@ -60,11 +61,8 @@ func (ctx *Context) SetClients(clients []transport.Client) {
 }
 
 func (ctx *Context) StartTickers() {
-	followerCandidateLoopTicker := time.NewTicker(getRandomElectionTimeout(&ctx.cfg))
-	leaderLoopTicker := time.NewTicker(getBroadcastTimeout(&ctx.cfg))
-
-	ctx.followerCandidateLoopTicker = followerCandidateLoopTicker
-	ctx.leaderLoopTicker = leaderLoopTicker
+	ctx.followerCandidateLoopTicker = time.NewTicker(getRandomElectionTimeout(&ctx.cfg))
+	ctx.leaderLoopTicker = time.NewTicker(getBroadcastTimeout(&ctx.cfg))
 }
 
 func (ctx *Context) GetFollowerCandidateLoopTicker() *time.Ticker {
@@ -75,7 +73,7 @@ func (ctx *Context) GetLeaderLoopTicker() *time.Ticker {
 	return ctx.leaderLoopTicker
 }
 
-func (ctx *Context) SetNewRandomElectionTimeout() {
+func (ctx *Context) ResetNewElectionTimeout() {
 	ctx.followerCandidateLoopTicker.Reset(getRandomElectionTimeout(&ctx.cfg))
 }
 
@@ -116,15 +114,9 @@ func (ctx *Context) hasRole(target int) bool {
 	return result
 }
 
-func (ctx *Context) ResetVotedFor() {
-	ctx.votedForMutex.Lock()
-	defer ctx.votedForMutex.Unlock()
-	ctx.voted = false
-}
-
 func (ctx *Context) Vote(candidateId string) bool {
-	ctx.votedForMutex.Lock()
-	defer ctx.votedForMutex.Unlock()
+	ctx.voteMutex.Lock()
+	defer ctx.voteMutex.Unlock()
 
 	var result bool
 
@@ -160,12 +152,12 @@ func (ctx *Context) GetVoteNumber() uint32 {
 }
 
 func (ctx *Context) SetCurrentTerm(value int32) {
+	ctx.resetVoted()
 	ctx.currentTerm.Store(value)
-	ctx.ResetVotedFor()
 }
 
 func (ctx *Context) IncrementCurrentTerm() int32 {
-	ctx.ResetVoteNumber()
+	ctx.resetVoted()
 	return ctx.currentTerm.Add(1)
 }
 
@@ -176,17 +168,25 @@ func (ctx *Context) GetCurrentTerm() int32 {
 func (ctx *Context) BecomeFollower() {
 	ctx.setRole(domain.FOLLOWER)
 	ctx.leaderLoopTicker.Stop()
+	ctx.ResetNewElectionTimeout()
 }
 
 func (ctx *Context) BecomeCandidate() {
 	ctx.setRole(domain.CANDIDATE)
 	ctx.leaderLoopTicker.Stop()
+	ctx.ResetNewElectionTimeout()
 }
 
 func (ctx *Context) BecomeLeader() {
 	ctx.setRole(domain.LEADER)
 	ctx.followerCandidateLoopTicker.Stop()
 	ctx.leaderLoopTicker.Reset(getBroadcastTimeout(&ctx.cfg))
+}
+
+func (ctx *Context) resetVoted() {
+	ctx.voteMutex.Lock()
+	defer ctx.voteMutex.Unlock()
+	ctx.voted = false
 }
 
 func getBroadcastTimeout(cfg *config.RaftConfig) time.Duration {

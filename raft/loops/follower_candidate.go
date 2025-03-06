@@ -23,7 +23,6 @@ func FollowerCandidateLoop(ctx *context.Context) {
 				ctx.BecomeLeader()
 				sendHeartbeat(ctx)
 			} else {
-				ctx.SetNewRandomElectionTimeout()
 				startNewTerm(ctx)
 			}
 		}
@@ -32,9 +31,10 @@ func FollowerCandidateLoop(ctx *context.Context) {
 
 func startNewTerm(ctx *context.Context) {
 	currentTerm := ctx.IncrementCurrentTerm()
-	offerCandidacy(ctx, currentTerm)
+
 	ctx.ResetVoteNumber()
 	ctx.Vote(ctx.GetNodeId()) // Node votes for itself
+	offerCandidacy(ctx, currentTerm)
 }
 
 func offerCandidacy(ctx *context.Context, currentTerm int32) {
