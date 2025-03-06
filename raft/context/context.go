@@ -174,7 +174,6 @@ func (ctx *Context) GetCurrentTerm() int32 {
 func (ctx *Context) BecomeFollower() {
 	ctx.setRole(domain.FOLLOWER)
 	ctx.leaderLoopTicker.Stop()
-	ctx.SetNewRandomElectionTimeout()
 }
 
 func (ctx *Context) BecomeCandidate() {
