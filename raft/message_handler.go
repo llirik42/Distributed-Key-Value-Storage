@@ -24,6 +24,8 @@ func (handler *MessageHandler) HandleRequestVoteRequest(request *domain.RequestV
 	a, _ := json.MarshalIndent(request, "", " ")
 	log.Printf("Node \"%s\" received request of vote: %s\n", ctx.GetNodeId(), a)
 
+	checkTerm(ctx, request.Term)
+
 	currentTerm := ctx.GetCurrentTerm()
 	var voteGranted bool
 
@@ -64,13 +66,22 @@ func (handler *MessageHandler) HandleAppendEntriesRequest(request *domain.Append
 func (handler *MessageHandler) HandleRequestVoteResponse(response *domain.RequestVoteResponse) error {
 	ctx := handler.ctx
 
-	utils.CheckTerm(ctx, response.Term) // TODO: Check this in gRPC-interceptor
-
 	a, _ := json.MarshalIndent(response, "", " ")
 	log.Printf("Node \"%s\" received response of vote: %s\n", ctx.GetNodeId(), a)
 
-	if response.VoteGranted {
-		ctx.IncrementVoteNumber()
+	checkTerm(ctx, response.Term) // TODO: Check this in gRPC-interceptor
+
+	if !response.VoteGranted {
+		return nil
+	}
+
+	// Got new vote
+	voteNumber := ctx.IncrementVoteNumber()
+	clusterSize := ctx.GetClusterSize()
+
+	if voteNumber > clusterSize/2 {
+		ctx.BecomeLeader()
+		utils.SendHeartbeat(ctx)
 	}
 
 	return nil
@@ -84,7 +95,14 @@ func (handler *MessageHandler) HandleAppendEntriesResponse(response *domain.Appe
 	a, _ := json.MarshalIndent(response, "", " ")
 	log.Printf("Node \"%s\" received response of append-entries: %s\n", ctx.GetNodeId(), a)
 
-	utils.CheckTerm(ctx, response.Term) // TODO: Check this in gRPC-interceptor
+	checkTerm(ctx, response.Term) // TODO: Check this in gRPC-interceptor
 
 	return nil
+}
+
+func checkTerm(ctx *context.Context, term int32) {
+	if term > ctx.GetCurrentTerm() {
+		ctx.SetCurrentTerm(term)
+		ctx.BecomeFollower()
+	}
 }

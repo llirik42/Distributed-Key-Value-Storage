@@ -1,10 +1,26 @@
 package utils
 
-import "distributed-algorithms/raft/context"
+import (
+	"distributed-algorithms/raft/context"
+	"distributed-algorithms/raft/domain"
+)
 
-func CheckTerm(ctx *context.Context, term int32) {
-	if term > ctx.GetCurrentTerm() {
-		ctx.SetCurrentTerm(term)
-		ctx.BecomeFollower()
+func SendHeartbeat(ctx *context.Context) {
+	request := domain.AppendEntriesRequest{
+		Term:         ctx.GetCurrentTerm(),
+		LeaderId:     ctx.GetNodeId(),
+		PrevLogIndex: 0, // TODO
+		PrevLogTerm:  0, // TODO
+		LeaderCommit: 0, // TODO
+	}
+
+	for _, client := range ctx.GetClients() {
+		go func() {
+			err := client.SendAppendEntries(request)
+
+			if err != nil {
+				// TODO: handle error
+			}
+		}()
 	}
 }

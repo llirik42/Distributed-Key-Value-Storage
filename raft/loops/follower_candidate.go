@@ -13,16 +13,8 @@ func FollowerCandidateLoop(ctx *context.Context) {
 			ctx.BecomeCandidate()
 			startNewTerm(ctx)
 		} else if ctx.IsCandidate() {
-			// TODO: становиться лидером и слать heartbeat нужно не здесь, а сразу при получении очередного положительного ответа на ReqeustForVote
-			clusterSize := ctx.GetClusterSize()
-			voteNumber := int(ctx.GetVoteNumber())
-
-			if voteNumber > clusterSize/2 {
-				ctx.BecomeLeader()
-				sendHeartbeat(ctx)
-			} else {
-				startNewTerm(ctx)
-			}
+			// The candidate didn't get quorum
+			startNewTerm(ctx)
 		}
 	}
 }

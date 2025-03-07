@@ -77,8 +77,8 @@ func (ctx *Context) ResetNewElectionTimeout() {
 	ctx.followerCandidateLoopTicker.Reset(getRandomElectionTimeout(&ctx.cfg))
 }
 
-func (ctx *Context) GetClusterSize() int {
-	return 1 + len(ctx.cfg.OtherNodes)
+func (ctx *Context) GetClusterSize() uint32 {
+	return uint32(1 + len(ctx.cfg.OtherNodes))
 }
 
 func (ctx *Context) GetClients() []transport.Client {
@@ -143,8 +143,8 @@ func (ctx *Context) ResetVoteNumber() {
 	ctx.voteNumber.Store(0)
 }
 
-func (ctx *Context) IncrementVoteNumber() {
-	ctx.voteNumber.Add(1)
+func (ctx *Context) IncrementVoteNumber() uint32 {
+	return ctx.voteNumber.Add(1)
 }
 
 func (ctx *Context) GetVoteNumber() uint32 {
