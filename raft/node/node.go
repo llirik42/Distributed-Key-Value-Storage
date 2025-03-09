@@ -2,8 +2,8 @@ package node
 
 import (
 	"distributed-algorithms/config"
+	"distributed-algorithms/context"
 	"distributed-algorithms/raft"
-	"distributed-algorithms/raft/context"
 	"distributed-algorithms/raft/loops"
 	"distributed-algorithms/raft/transport"
 	"encoding/json"

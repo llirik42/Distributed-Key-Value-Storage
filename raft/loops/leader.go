@@ -1,7 +1,7 @@
 package loops
 
 import (
-	"distributed-algorithms/raft/context"
+	"distributed-algorithms/context"
 	"distributed-algorithms/raft/utils"
 )
 

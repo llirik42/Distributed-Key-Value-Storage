@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"distributed-algorithms/raft/context"
+	"distributed-algorithms/context"
 	"distributed-algorithms/raft/domain"
 	"log"
 )
