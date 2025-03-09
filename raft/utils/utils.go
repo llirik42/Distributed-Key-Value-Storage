@@ -3,6 +3,7 @@ package utils
 import (
 	"distributed-algorithms/raft/context"
 	"distributed-algorithms/raft/domain"
+	"log"
 )
 
 func SendHeartbeat(ctx *context.Context) {
@@ -13,6 +14,8 @@ func SendHeartbeat(ctx *context.Context) {
 		PrevLogTerm:  0, // TODO
 		LeaderCommit: 0, // TODO
 	}
+
+	log.Println("Sending append heartbeat")
 
 	for _, client := range ctx.GetClients() {
 		go func() {
