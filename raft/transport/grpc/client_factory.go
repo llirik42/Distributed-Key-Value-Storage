@@ -5,30 +5,26 @@ import (
 	"distributed-algorithms/raft/transport"
 	"errors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/credentials/insecure"
+	"time"
 )
 
 type ClientFactory struct{}
 
 func (factory ClientFactory) NewClient(address string, handleRequestForVoteResponse transport.HandleRequestForVoteResponse, handleAppendEntriesResponse transport.HandleAppendEntriesResponse) (transport.Client, error) {
-	//var retryPolicy = `{
-	//        "methodConfig": [{
-	//    		"name": [{"service": "grpc.examples.echo.Echo"}],
-	//            "retryPolicy": {
-	//                "MaxAttempts": 20,
-	//                "InitialBackoff": ".001s",
-	//                "MaxBackoff": ".001s",
-	//                "BackoffMultiplier": 1.0,
-	//                "RetryableStatusCodes": [ "UNAVAILABLE" ]
-	//            }
-	//        }]
-	//    }`
-
-	// TODO: add retry policy?
-
+	// TODO: connect params should depend on RAFT-timeouts
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithDisableRetry(),
+		grpc.WithConnectParams(grpc.ConnectParams{
+			Backoff: backoff.Config{
+				BaseDelay:  10 * time.Millisecond,
+				Multiplier: 1,
+				Jitter:     1,
+				MaxDelay:   10 * time.Millisecond,
+			},
+			MinConnectTimeout: 5 * time.Second,
+		}),
 	}
 
 	gRPCConnection, err := grpc.NewClient(address, opts...)
