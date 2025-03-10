@@ -49,6 +49,10 @@ func (server *Server) AppendEntries(_ context.Context, request *pb.AppendEntries
 	return &pb.AppendEntriesResponse{Term: result.Term, Success: result.Success}, nil
 }
 
+func (server *Server) Check(_ context.Context, request *pb.HealthCheckRequest) (*pb.HealthCheckResponse, error) {
+	return &pb.HealthCheckResponse{Healthy: true}, nil
+}
+
 func (server *Server) Listen() error {
 	err := server.gRPCServer.Serve(server.listener)
 
