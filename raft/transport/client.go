@@ -4,8 +4,8 @@ import (
 	"distributed-algorithms/raft/domain"
 )
 
-type HandleRequestForVoteResponse func(response *domain.RequestVoteResponse) error
-type HandleAppendEntriesResponse func(response *domain.AppendEntriesResponse) error
+type HandleRequestForVoteResponse func(response *domain.RequestVoteResponse)
+type HandleAppendEntriesResponse func(response *domain.AppendEntriesResponse)
 
 type Client interface {
 	SendRequestForVote(request domain.RequestVoteRequest) error

@@ -63,7 +63,7 @@ func (handler *MessageHandler) HandleAppendEntriesRequest(request *domain.Append
 	return &domain.AppendEntriesResponse{Term: currentTerm, Success: success}, nil
 }
 
-func (handler *MessageHandler) HandleRequestVoteResponse(response *domain.RequestVoteResponse) error {
+func (handler *MessageHandler) HandleRequestVoteResponse(response *domain.RequestVoteResponse) {
 	ctx := handler.ctx
 
 	a, _ := json.MarshalIndent(response, "", " ")
@@ -72,7 +72,7 @@ func (handler *MessageHandler) HandleRequestVoteResponse(response *domain.Reques
 	checkTerm(ctx, response.Term) // TODO: Check this in gRPC-interceptor
 
 	if !response.VoteGranted {
-		return nil
+		return
 	}
 
 	// Got new vote
@@ -83,11 +83,9 @@ func (handler *MessageHandler) HandleRequestVoteResponse(response *domain.Reques
 		ctx.BecomeLeader()
 		utils.SendHeartbeat(ctx)
 	}
-
-	return nil
 }
 
-func (handler *MessageHandler) HandleAppendEntriesResponse(response *domain.AppendEntriesResponse) error {
+func (handler *MessageHandler) HandleAppendEntriesResponse(response *domain.AppendEntriesResponse) {
 	// TODO: add checks related to logs
 
 	ctx := handler.ctx
@@ -96,8 +94,6 @@ func (handler *MessageHandler) HandleAppendEntriesResponse(response *domain.Appe
 	log.Printf("Node \"%s\" received response of append-entries: %s\n", ctx.GetNodeId(), a)
 
 	checkTerm(ctx, response.Term) // TODO: Check this in gRPC-interceptor
-
-	return nil
 }
 
 func checkTerm(ctx *context.Context, term int32) {

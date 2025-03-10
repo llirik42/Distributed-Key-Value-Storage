@@ -35,7 +35,9 @@ func (client *Client) SendRequestForVote(request domain.RequestVoteRequest) erro
 		VoteGranted: pbResponse.VoteGranted,
 	}
 
-	return client.handleRequestForVoteResponse(&response)
+	client.handleRequestForVoteResponse(&response)
+
+	return nil
 }
 
 func (client *Client) SendAppendEntries(request domain.AppendEntriesRequest) error {
@@ -60,7 +62,9 @@ func (client *Client) SendAppendEntries(request domain.AppendEntriesRequest) err
 		Success: pbResponse.Success,
 	}
 
-	return client.handleAppendEntriesResponse(&response)
+	client.handleAppendEntriesResponse(&response)
+
+	return nil
 }
 
 func (client *Client) Close() error {
