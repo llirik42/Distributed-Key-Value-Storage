@@ -17,7 +17,7 @@ func main() {
 		log.Fatal(err1)
 	}
 
-	err2 := node.StartNode(*cfg, grpc.ServerFactory{}, grpc.ClientFactory{})
+	err2 := node.StartRaftNode(cfg.RaftConfig, grpc.ServerFactory{}, grpc.ClientFactory{})
 	if err2 != nil {
 		log.Fatal(err2)
 	}
