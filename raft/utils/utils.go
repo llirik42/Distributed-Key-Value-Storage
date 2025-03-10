@@ -22,6 +22,8 @@ func SendHeartbeat(ctx *context.Context) {
 			err := client.SendAppendEntries(request)
 
 			if err != nil {
+				log.Printf("Error sending append-entries: %v", err)
+
 				// TODO: handle error
 			}
 		}()

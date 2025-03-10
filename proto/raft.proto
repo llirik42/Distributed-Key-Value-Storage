@@ -3,12 +3,6 @@ syntax = "proto3";
 package raft_protocol;
 option go_package = "./raft_protocol";
 
-message HealthCheckRequest {}
-
-message HealthCheckResponse {
-  bool healthy = 1;
-}
-
 message RequestVoteRequest {
   int32 term = 1;
   string candidateId = 2;
@@ -35,8 +29,6 @@ message AppendEntriesResponse {
 }
 
 service RaftService {
-  rpc Check(HealthCheckRequest) returns (HealthCheckResponse);
-
   rpc RequestForVote(RequestVoteRequest) returns (RequestVoteResponse) {}
 
   rpc AppendEntries(AppendEntriesRequest) returns (AppendEntriesResponse) {}

@@ -11,8 +11,24 @@ import (
 type ClientFactory struct{}
 
 func (factory ClientFactory) NewClient(address string, handleRequestForVoteResponse transport.HandleRequestForVoteResponse, handleAppendEntriesResponse transport.HandleAppendEntriesResponse) (transport.Client, error) {
+	//var retryPolicy = `{
+	//        "methodConfig": [{
+	//    		"name": [{"service": "grpc.examples.echo.Echo"}],
+	//            "retryPolicy": {
+	//                "MaxAttempts": 20,
+	//                "InitialBackoff": ".001s",
+	//                "MaxBackoff": ".001s",
+	//                "BackoffMultiplier": 1.0,
+	//                "RetryableStatusCodes": [ "UNAVAILABLE" ]
+	//            }
+	//        }]
+	//    }`
+
+	// TODO: add retry policy?
+
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDisableRetry(),
 	}
 
 	gRPCConnection, err := grpc.NewClient(address, opts...)
