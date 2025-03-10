@@ -67,6 +67,22 @@ func (client *Client) SendAppendEntries(request domain.AppendEntriesRequest) err
 	return nil
 }
 
+func (client *Client) SendHealthCheck(domain.HealthCheckRequest) (*domain.HealthCheckResponse, error) {
+	pbRequest := &pb.HealthCheckRequest{}
+
+	pbResponse, pbErr := client.gRPCClient.Check(context.Background(), pbRequest)
+
+	if pbErr != nil {
+		return nil, errors.Join(errors.New("failed to send health-check: "+pbRequest.String()), pbErr)
+	}
+
+	response := domain.HealthCheckResponse{
+		Healthy: pbResponse.Healthy,
+	}
+
+	return &response, nil
+}
+
 func (client *Client) Close() error {
 	err := client.gRPCConnection.Close()
 

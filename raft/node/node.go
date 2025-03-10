@@ -41,7 +41,10 @@ func startRaftNode(config config.RaftConfig, raftServerFactory transport.ServerF
 
 	// Create connections to other nodes
 	for _, nodeAddress := range config.OtherNodes {
-		newClient, clientCreationErr := raftClientFactory.NewClient(nodeAddress, messageHandler.HandleRequestVoteResponse, messageHandler.HandleAppendEntriesResponse)
+		newClient, clientCreationErr := raftClientFactory.NewClient(
+			nodeAddress,
+			messageHandler.HandleRequestVoteResponse,
+			messageHandler.HandleAppendEntriesResponse)
 
 		if clientCreationErr != nil {
 			// TODO: handle error

@@ -5,6 +5,7 @@ import (
 )
 
 type HandleRequestForVoteResponse func(response *domain.RequestVoteResponse)
+
 type HandleAppendEntriesResponse func(response *domain.AppendEntriesResponse)
 
 type Client interface {
@@ -12,9 +13,14 @@ type Client interface {
 
 	SendAppendEntries(request domain.AppendEntriesRequest) error
 
+	SendHealthCheck(request domain.HealthCheckRequest) (*domain.HealthCheckResponse, error)
+
 	Close() error
 }
 
 type ClientFactory interface {
-	NewClient(address string, handleRequestForVoteResponse HandleRequestForVoteResponse, handleAppendEntriesResponse HandleAppendEntriesResponse) (Client, error)
+	NewClient(
+		address string,
+		handleRequestForVoteResponse HandleRequestForVoteResponse,
+		handleAppendEntriesResponse HandleAppendEntriesResponse) (Client, error)
 }
