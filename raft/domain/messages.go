@@ -1,5 +1,11 @@
 package domain
 
+type HealthCheckRequest struct{}
+
+type HealthCheckResponse struct {
+	Healthy bool
+}
+
 type RequestVoteRequest struct {
 	Term         int32
 	CandidateId  string
