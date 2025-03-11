@@ -5,7 +5,7 @@ import (
 	pb "distributed-algorithms/generated/proto"
 	"distributed-algorithms/raft/domain"
 	"distributed-algorithms/raft/transport"
-	"errors"
+	"fmt"
 	"google.golang.org/grpc"
 )
 
@@ -24,10 +24,10 @@ func (client *Client) SendRequestForVote(request domain.RequestVoteRequest) erro
 		LastLogTerm:  request.LastLogTerm,
 	}
 
-	pbResponse, pbErr := client.gRPCClient.RequestForVote(context.Background(), pbRequest)
+	pbResponse, err := client.gRPCClient.RequestForVote(context.Background(), pbRequest)
 
-	if pbErr != nil {
-		return errors.Join(errors.New("failed to send request for vote: "+pbRequest.String()), pbErr)
+	if err != nil {
+		return fmt.Errorf("failed to send request for vote %s: %w", pbRequest.String(), err)
 	}
 
 	response := domain.RequestVoteResponse{
@@ -49,10 +49,10 @@ func (client *Client) SendAppendEntries(request domain.AppendEntriesRequest) err
 		LeaderCommit: request.LeaderCommit,
 	}
 
-	pbResponse, pbErr := client.gRPCClient.AppendEntries(context.Background(), pbRequest)
+	pbResponse, err := client.gRPCClient.AppendEntries(context.Background(), pbRequest)
 
-	if pbErr != nil {
-		return errors.Join(errors.New("failed to send append entries: "+pbRequest.String()), pbErr)
+	if err != nil {
+		return fmt.Errorf("failed to send append-entries request %s: %w", pbRequest.String(), err)
 	}
 
 	response := domain.AppendEntriesResponse{
@@ -66,10 +66,8 @@ func (client *Client) SendAppendEntries(request domain.AppendEntriesRequest) err
 }
 
 func (client *Client) Close() error {
-	err := client.gRPCConnection.Close()
-
-	if err != nil {
-		return errors.Join(errors.New("failed to close gRPC-client"), err)
+	if err := client.gRPCConnection.Close(); err != nil {
+		return fmt.Errorf("failed to close gRPC-connection: %w", err)
 	}
 
 	return nil

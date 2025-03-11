@@ -16,7 +16,9 @@ func NewMessageHandler(ctx *context.Context) *MessageHandler {
 	return &MessageHandler{ctx: ctx}
 }
 
-func (handler *MessageHandler) HandleRequestVoteRequest(request *domain.RequestVoteRequest) (*domain.RequestVoteResponse, error) {
+func (handler *MessageHandler) HandleRequestVoteRequest(
+	request *domain.RequestVoteRequest,
+) (*domain.RequestVoteResponse, error) {
 	// TODO: add checks about candidate's log
 
 	ctx := handler.ctx
@@ -42,7 +44,9 @@ func (handler *MessageHandler) HandleRequestVoteRequest(request *domain.RequestV
 	return &domain.RequestVoteResponse{Term: currentTerm, VoteGranted: voteGranted}, nil
 }
 
-func (handler *MessageHandler) HandleAppendEntriesRequest(request *domain.AppendEntriesRequest) (*domain.AppendEntriesResponse, error) {
+func (handler *MessageHandler) HandleAppendEntriesRequest(
+	request *domain.AppendEntriesRequest,
+) (*domain.AppendEntriesResponse, error) {
 	// TODO: add checks related to log entries
 
 	ctx := handler.ctx
@@ -63,7 +67,9 @@ func (handler *MessageHandler) HandleAppendEntriesRequest(request *domain.Append
 	return &domain.AppendEntriesResponse{Term: currentTerm, Success: success}, nil
 }
 
-func (handler *MessageHandler) HandleRequestVoteResponse(response *domain.RequestVoteResponse) {
+func (handler *MessageHandler) HandleRequestVoteResponse(
+	response *domain.RequestVoteResponse,
+) {
 	ctx := handler.ctx
 
 	a, _ := json.MarshalIndent(response, "", " ")
@@ -85,7 +91,9 @@ func (handler *MessageHandler) HandleRequestVoteResponse(response *domain.Reques
 	}
 }
 
-func (handler *MessageHandler) HandleAppendEntriesResponse(response *domain.AppendEntriesResponse) {
+func (handler *MessageHandler) HandleAppendEntriesResponse(
+	response *domain.AppendEntriesResponse,
+) {
 	// TODO: add checks related to logs
 
 	ctx := handler.ctx

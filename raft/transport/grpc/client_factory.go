@@ -3,7 +3,7 @@ package grpc
 import (
 	pb "distributed-algorithms/generated/proto"
 	"distributed-algorithms/raft/transport"
-	"errors"
+	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/credentials/insecure"
@@ -12,7 +12,11 @@ import (
 
 type ClientFactory struct{}
 
-func (factory ClientFactory) NewClient(address string, handleRequestForVoteResponse transport.HandleRequestForVoteResponse, handleAppendEntriesResponse transport.HandleAppendEntriesResponse) (transport.Client, error) {
+func (factory ClientFactory) NewClient(
+	address string,
+	handleRequestForVoteResponse transport.HandleRequestForVoteResponse,
+	handleAppendEntriesResponse transport.HandleAppendEntriesResponse,
+) (transport.Client, error) {
 	// TODO: connect params should depend on RAFT-timeouts
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -30,7 +34,7 @@ func (factory ClientFactory) NewClient(address string, handleRequestForVoteRespo
 	gRPCConnection, err := grpc.NewClient(address, opts...)
 
 	if err != nil {
-		return nil, errors.Join(errors.New("failed to create gRPC-client"), err)
+		return nil, fmt.Errorf("failed to create gRPC-connection with %s: %w", address, err)
 	}
 
 	client := &Client{

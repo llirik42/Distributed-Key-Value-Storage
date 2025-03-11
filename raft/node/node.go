@@ -7,6 +7,7 @@ import (
 	"distributed-algorithms/raft/loops"
 	"distributed-algorithms/raft/transport"
 	"encoding/json"
+	"fmt"
 	"log"
 )
 
@@ -18,37 +19,38 @@ func StartRaftNode(
 	ctx := context.NewContext(config)
 	messageHandler := raft.NewMessageHandler(ctx)
 
-	server, err := raftServerFactory.NewServer(
+	// Create and start server
+	server, errServer := raftServerFactory.NewServer(
 		config.SelfNode.Address,
 		messageHandler.HandleRequestVoteRequest,
-		messageHandler.HandleAppendEntriesRequest)
-	if err != nil {
+		messageHandler.HandleAppendEntriesRequest,
+	)
+	if errServer != nil {
 		// TODO: handle error
-		return err
+		return errServer
 	}
 	defer func(server transport.Server) {
-		err := server.Shutdown()
-		if err != nil {
+		if err := server.Shutdown(); err != nil {
 			// TODO: handle error
 		}
 	}(server)
 
-	var clients []transport.Client
-
 	// Create connections to other nodes
+	var clients []transport.Client
 	for _, nodeAddress := range config.OtherNodes {
-		newClient, clientCreationErr := raftClientFactory.NewClient(
+		newClient, errClient := raftClientFactory.NewClient(
 			nodeAddress,
 			messageHandler.HandleRequestVoteResponse,
-			messageHandler.HandleAppendEntriesResponse)
+			messageHandler.HandleAppendEntriesResponse,
+		)
 
-		if clientCreationErr != nil {
+		if errClient != nil {
+			continue
 			// TODO: handle error
 		}
 
 		defer func(newClient transport.Client) {
-			err := newClient.Close()
-			if err != nil {
+			if err := newClient.Close(); err != nil {
 				// TODO: handle error
 			}
 		}(newClient)
@@ -67,10 +69,8 @@ func StartRaftNode(
 	a, _ := json.MarshalIndent(config, "", " ")
 	log.Printf("Node is starting with configuration %s\n", a)
 
-	listenErr := server.Listen()
-	if listenErr != nil {
-		// TODO: handle error
-		return listenErr
+	if errListen := server.Listen(); errListen != nil {
+		return fmt.Errorf("node cannot start listen RAFT-connections: %w", errListen)
 	}
 
 	return nil

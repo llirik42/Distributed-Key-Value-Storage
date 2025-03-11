@@ -1,7 +1,7 @@
 package config
 
 import (
-	"errors"
+	"fmt"
 	"github.com/caarlos0/env/v9"
 	"github.com/joho/godotenv"
 )
@@ -11,16 +11,15 @@ type Config struct {
 }
 
 func NewConfiguration(filePath string) (*Config, error) {
-	loadingErr := godotenv.Load(filePath)
-	if loadingErr != nil {
-		return nil, errors.Join(errors.New("error reading configuration"), loadingErr)
+	if err := godotenv.Load(filePath); err != nil {
+		return nil, fmt.Errorf("failed to load environment variables: %w", err)
 	}
 
 	cfg := &Config{}
-	parsingErr := env.Parse(cfg)
 
-	if parsingErr != nil {
-		return nil, errors.Join(errors.New("error parsing configuration"), parsingErr)
+	if err := env.Parse(cfg); err != nil {
+		return nil, fmt.Errorf("failed to parse environment variables: %w", err)
 	}
+
 	return cfg, nil
 }

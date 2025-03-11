@@ -3,7 +3,7 @@ package grpc
 import (
 	pb "distributed-algorithms/generated/proto"
 	"distributed-algorithms/raft/transport"
-	"errors"
+	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"net"
@@ -11,11 +11,15 @@ import (
 
 type ServerFactory struct{}
 
-func (factory ServerFactory) NewServer(address string, handleRequestForVoteRequest transport.HandleRequestForVoteRequest, handleAppendEntriesRequest transport.HandleAppendEntriesRequest) (transport.Server, error) {
+func (factory ServerFactory) NewServer(
+	address string,
+	handleRequestForVoteRequest transport.HandleRequestForVoteRequest,
+	handleAppendEntriesRequest transport.HandleAppendEntriesRequest,
+) (transport.Server, error) {
 	listener, err := net.Listen("tcp", address)
 
 	if err != nil {
-		return nil, errors.Join(errors.New("failed to init gRPC-server"), err)
+		return nil, fmt.Errorf("failed to listen: %w", err)
 	}
 
 	gRPCServer := grpc.NewServer()

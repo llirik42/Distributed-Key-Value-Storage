@@ -5,7 +5,7 @@ import (
 	pb "distributed-algorithms/generated/proto"
 	"distributed-algorithms/raft/domain"
 	"distributed-algorithms/raft/transport"
-	"errors"
+	"fmt"
 	"google.golang.org/grpc"
 	"net"
 )
@@ -18,7 +18,10 @@ type Server struct {
 	handleAppendEntriesRequest  transport.HandleAppendEntriesRequest
 }
 
-func (server *Server) RequestForVote(_ context.Context, request *pb.RequestVoteRequest) (*pb.RequestVoteResponse, error) {
+func (server *Server) RequestForVote(
+	_ context.Context,
+	request *pb.RequestVoteRequest,
+) (*pb.RequestVoteResponse, error) {
 	result, err := server.handleRequestForVoteRequest(&domain.RequestVoteRequest{
 		Term:         request.Term,
 		CandidateId:  request.CandidateId,
@@ -27,13 +30,16 @@ func (server *Server) RequestForVote(_ context.Context, request *pb.RequestVoteR
 	})
 
 	if err != nil {
-		return nil, errors.Join(errors.New("failed to handle request for vote: "+request.String()), err)
+		return nil, fmt.Errorf("failed to handle request for vote %s: %w", request.String(), err)
 	}
 
 	return &pb.RequestVoteResponse{Term: result.Term, VoteGranted: result.VoteGranted}, nil
 }
 
-func (server *Server) AppendEntries(_ context.Context, request *pb.AppendEntriesRequest) (*pb.AppendEntriesResponse, error) {
+func (server *Server) AppendEntries(
+	_ context.Context,
+	request *pb.AppendEntriesRequest,
+) (*pb.AppendEntriesResponse, error) {
 	result, err := server.handleAppendEntriesRequest(&domain.AppendEntriesRequest{
 		Term:         request.Term,
 		LeaderId:     request.LeaderId,
@@ -43,21 +49,15 @@ func (server *Server) AppendEntries(_ context.Context, request *pb.AppendEntries
 	})
 
 	if err != nil {
-		return nil, errors.Join(errors.New("failed to handle append entries: "+request.String()), err)
+		return nil, fmt.Errorf("failed to handle append-entries request %s: %w", request.String(), err)
 	}
 
 	return &pb.AppendEntriesResponse{Term: result.Term, Success: result.Success}, nil
 }
 
-func (server *Server) Check(_ context.Context, request *pb.HealthCheckRequest) (*pb.HealthCheckResponse, error) {
-	return &pb.HealthCheckResponse{Healthy: true}, nil
-}
-
 func (server *Server) Listen() error {
-	err := server.gRPCServer.Serve(server.listener)
-
-	if err != nil {
-		return errors.Join(errors.New("failed to start gRPC-server"), err)
+	if err := server.gRPCServer.Serve(server.listener); err != nil {
+		return fmt.Errorf("failed to serve gRPC-server: %w", err)
 	}
 
 	return nil

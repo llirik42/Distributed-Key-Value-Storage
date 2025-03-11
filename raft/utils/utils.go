@@ -16,9 +16,7 @@ func SendHeartbeat(ctx *context.Context) {
 
 	for _, client := range ctx.GetClients() {
 		go func() {
-			err := client.SendAppendEntries(request)
-
-			if err != nil {
+			if err := client.SendAppendEntries(request); err != nil {
 				// TODO: handle error
 			}
 		}()

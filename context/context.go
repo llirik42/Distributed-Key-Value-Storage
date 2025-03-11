@@ -37,7 +37,7 @@ func NewContext(cfg config.RaftConfig) *Context {
 		cfg:                         cfg,
 		currentTerm:                 atomic.Int32{},
 		voted:                       false,
-		votedFor:                    "",
+		votedFor:                    "", // Default value doesn't matter because voted = false by default
 		voteMutex:                   sync.Mutex{},
 		voteNumber:                  atomic.Uint32{},
 		nodeId:                      cfg.SelfNode.Id,

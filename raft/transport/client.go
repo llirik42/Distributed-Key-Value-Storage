@@ -20,5 +20,6 @@ type ClientFactory interface {
 	NewClient(
 		address string,
 		handleRequestForVoteResponse HandleRequestForVoteResponse,
-		handleAppendEntriesResponse HandleAppendEntriesResponse) (Client, error)
+		handleAppendEntriesResponse HandleAppendEntriesResponse,
+	) (Client, error)
 }
