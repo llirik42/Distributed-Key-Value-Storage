@@ -26,12 +26,11 @@ func StartRaftNode(
 		messageHandler.HandleAppendEntriesRequest,
 	)
 	if errServer != nil {
-		// TODO: handle error
-		return errServer
+		return fmt.Errorf("failed to RAFT-server for node: %w", errServer)
 	}
 	defer func(server transport.Server) {
 		if err := server.Shutdown(); err != nil {
-			// TODO: handle error
+			log.Printf("failed to shutdown RAFT-server gracefully: %s", err)
 		}
 	}(server)
 
@@ -45,13 +44,12 @@ func StartRaftNode(
 		)
 
 		if errClient != nil {
-			continue
-			// TODO: handle error
+			log.Fatalf("failed to creation connection to node %s: %s", nodeAddress, errClient)
 		}
 
 		defer func(newClient transport.Client) {
 			if err := newClient.Close(); err != nil {
-				// TODO: handle error
+				log.Printf("failed to close node-connection gracefully: %s", err)
 			}
 		}(newClient)
 

@@ -12,13 +12,12 @@ func main() {
 	args := os.Args
 	filePath := args[1]
 
-	cfg, err1 := config.NewConfiguration(filePath)
-	if err1 != nil {
-		log.Fatal(err1)
+	cfg, errConfig := config.NewConfiguration(filePath)
+	if errConfig != nil {
+		log.Fatal(errConfig)
 	}
 
-	err2 := node.StartRaftNode(cfg.RaftConfig, grpc.ServerFactory{}, grpc.ClientFactory{})
-	if err2 != nil {
-		log.Fatal(err2)
+	if err := node.StartRaftNode(cfg.RaftConfig, grpc.ServerFactory{}, grpc.ClientFactory{}); err != nil {
+		log.Fatal(err)
 	}
 }
