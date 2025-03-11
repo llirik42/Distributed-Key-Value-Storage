@@ -3,7 +3,6 @@ package loops
 import (
 	"distributed-algorithms/context"
 	"distributed-algorithms/raft/domain"
-	"log"
 )
 
 func FollowerCandidateLoop(ctx *context.Context) {
@@ -35,8 +34,6 @@ func offerCandidacy(ctx *context.Context, currentTerm int32) {
 		LastLogIndex: 0,
 		LastLogTerm:  0,
 	}
-
-	log.Println("Sending request for vote")
 
 	for _, client := range ctx.GetClients() {
 		go func() {
