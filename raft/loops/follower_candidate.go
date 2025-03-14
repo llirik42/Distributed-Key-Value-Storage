@@ -9,12 +9,19 @@ func FollowerCandidateLoop(ctx *context.Context) {
 	ticker := ctx.GetFollowerCandidateLoopTicker()
 
 	for range ticker.C {
-		if ctx.IsFollower() {
-			ctx.BecomeCandidate()
-		}
-
-		startNewTerm(ctx)
+		iterateFollowerCandidateLoop(ctx)
 	}
+}
+
+func iterateFollowerCandidateLoop(ctx *context.Context) {
+	ctx.Lock()
+	defer ctx.Unlock()
+
+	if ctx.IsFollower() {
+		ctx.BecomeCandidate()
+	}
+
+	startNewTerm(ctx)
 }
 
 func startNewTerm(ctx *context.Context) {

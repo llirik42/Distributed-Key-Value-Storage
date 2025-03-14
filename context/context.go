@@ -6,24 +6,20 @@ import (
 	"distributed-algorithms/raft/transport"
 	"math/rand"
 	"sync"
-	"sync/atomic"
 	"time"
 )
 
 type Context struct {
-	cfg config.RaftConfig
+	ctxMutex sync.Mutex
 
-	currentTerm atomic.Int32
+	cfg         config.RaftConfig
+	currentTerm int32
+	voted       bool
+	votedFor    string
+	voteNumber  uint32
 
-	voted     bool
-	votedFor  string
-	voteMutex sync.Mutex
-
-	voteNumber atomic.Uint32
-
-	nodeId        string
-	nodeRole      int
-	nodeRoleMutex sync.Mutex
+	nodeId   string
+	nodeRole int
 
 	followerCandidateLoopTicker *time.Ticker
 	leaderLoopTicker            *time.Ticker
@@ -35,14 +31,12 @@ type Context struct {
 func NewContext(cfg config.RaftConfig) *Context {
 	ctx := &Context{
 		cfg:                         cfg,
-		currentTerm:                 atomic.Int32{},
+		currentTerm:                 0,
 		voted:                       false,
 		votedFor:                    "", // Default value doesn't matter because voted = false by default
-		voteMutex:                   sync.Mutex{},
-		voteNumber:                  atomic.Uint32{},
+		voteNumber:                  0,
 		nodeId:                      cfg.SelfNode.Id,
 		nodeRole:                    domain.FOLLOWER,
-		nodeRoleMutex:               sync.Mutex{},
 		followerCandidateLoopTicker: nil,
 		leaderLoopTicker:            nil,
 		server:                      nil,
@@ -50,6 +44,14 @@ func NewContext(cfg config.RaftConfig) *Context {
 	}
 
 	return ctx
+}
+
+func (ctx *Context) Lock() {
+	ctx.ctxMutex.Lock()
+}
+
+func (ctx *Context) Unlock() {
+	ctx.ctxMutex.Unlock()
 }
 
 func (ctx *Context) SetServer(server *transport.Server) {
@@ -102,22 +104,14 @@ func (ctx *Context) IsLeader() bool {
 }
 
 func (ctx *Context) setRole(target int) {
-	ctx.nodeRoleMutex.Lock()
-	defer ctx.nodeRoleMutex.Unlock()
 	ctx.nodeRole = target
 }
 
 func (ctx *Context) hasRole(target int) bool {
-	ctx.nodeRoleMutex.Lock()
-	defer ctx.nodeRoleMutex.Unlock()
-	result := ctx.nodeRole == target
-	return result
+	return ctx.nodeRole == target
 }
 
 func (ctx *Context) Vote(candidateId string) bool {
-	ctx.voteMutex.Lock()
-	defer ctx.voteMutex.Unlock()
-
 	var result bool
 
 	if !ctx.voted {
@@ -140,29 +134,27 @@ func (ctx *Context) Vote(candidateId string) bool {
 }
 
 func (ctx *Context) ResetVoteNumber() {
-	ctx.voteNumber.Store(0)
+	ctx.voteNumber = 0
 }
 
 func (ctx *Context) IncrementVoteNumber() uint32 {
-	return ctx.voteNumber.Add(1)
-}
-
-func (ctx *Context) GetVoteNumber() uint32 {
-	return ctx.voteNumber.Load()
+	ctx.voteNumber++
+	return ctx.voteNumber
 }
 
 func (ctx *Context) SetCurrentTerm(value int32) {
 	ctx.resetVoted()
-	ctx.currentTerm.Store(value)
+	ctx.currentTerm = value
 }
 
 func (ctx *Context) IncrementCurrentTerm() int32 {
 	ctx.resetVoted()
-	return ctx.currentTerm.Add(1)
+	ctx.currentTerm++
+	return ctx.currentTerm
 }
 
 func (ctx *Context) GetCurrentTerm() int32 {
-	return ctx.currentTerm.Load()
+	return ctx.currentTerm
 }
 
 func (ctx *Context) BecomeFollower() {
@@ -184,8 +176,6 @@ func (ctx *Context) BecomeLeader() {
 }
 
 func (ctx *Context) resetVoted() {
-	ctx.voteMutex.Lock()
-	defer ctx.voteMutex.Unlock()
 	ctx.voted = false
 }
 

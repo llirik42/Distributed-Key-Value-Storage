@@ -26,8 +26,10 @@ func (handler *MessageHandler) HandleRequestVoteRequest(
 	a, _ := json.MarshalIndent(request, "", " ")
 	log.Printf("Node \"%s\" received request of vote: %s\n", ctx.GetNodeId(), a)
 
-	checkTerm(ctx, request.Term)
+	ctx.Lock()
+	defer ctx.Unlock()
 
+	checkTerm(ctx, request.Term)
 	currentTerm := ctx.GetCurrentTerm()
 	var voteGranted bool
 
@@ -54,6 +56,9 @@ func (handler *MessageHandler) HandleAppendEntriesRequest(
 	a, _ := json.MarshalIndent(request, "", " ")
 	log.Printf("Node \"%s\" received request of append-entries: %s\n", ctx.GetNodeId(), a)
 
+	ctx.Lock()
+	defer ctx.Unlock()
+
 	currentTerm := ctx.GetCurrentTerm()
 	requestTerm := request.Term
 	success := requestTerm >= currentTerm
@@ -74,6 +79,9 @@ func (handler *MessageHandler) HandleRequestVoteResponse(
 
 	a, _ := json.MarshalIndent(response, "", " ")
 	log.Printf("Node \"%s\" received response of vote: %s\n", ctx.GetNodeId(), a)
+
+	ctx.Lock()
+	defer ctx.Unlock()
 
 	checkTerm(ctx, response.Term) // TODO: Check this in gRPC-interceptor
 
@@ -100,6 +108,9 @@ func (handler *MessageHandler) HandleAppendEntriesResponse(
 
 	a, _ := json.MarshalIndent(response, "", " ")
 	log.Printf("Node \"%s\" received response of append-entries: %s\n", ctx.GetNodeId(), a)
+
+	ctx.Lock()
+	defer ctx.Unlock()
 
 	checkTerm(ctx, response.Term) // TODO: Check this in gRPC-interceptor
 }

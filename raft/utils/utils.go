@@ -6,6 +6,9 @@ import (
 )
 
 func SendHeartbeat(ctx *context.Context) {
+	ctx.Lock()
+	defer ctx.Unlock()
+
 	request := domain.AppendEntriesRequest{
 		Term:         ctx.GetCurrentTerm(),
 		LeaderId:     ctx.GetNodeId(),
