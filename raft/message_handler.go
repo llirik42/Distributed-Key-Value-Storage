@@ -115,7 +115,7 @@ func (handler *MessageHandler) HandleAppendEntriesResponse(
 	checkTerm(ctx, response.Term) // TODO: Check this in gRPC-interceptor
 }
 
-func checkTerm(ctx *context.Context, term int32) {
+func checkTerm(ctx *context.Context, term uint32) {
 	if term > ctx.GetCurrentTerm() {
 		ctx.SetCurrentTerm(term)
 		ctx.BecomeFollower()

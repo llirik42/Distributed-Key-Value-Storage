@@ -31,7 +31,7 @@ func startNewTerm(ctx *context.Context) {
 	offerCandidacy(ctx, currentTerm)
 }
 
-func offerCandidacy(ctx *context.Context, currentTerm int32) {
+func offerCandidacy(ctx *context.Context, currentTerm uint32) {
 	request := domain.RequestVoteRequest{
 		Term:         currentTerm,
 		CandidateId:  ctx.GetNodeId(),

@@ -1,25 +1,25 @@
 package domain
 
 type RequestVoteRequest struct {
-	Term         int32
+	Term         uint32
 	CandidateId  string
-	LastLogIndex int32
-	LastLogTerm  int32
+	LastLogIndex uint32
+	LastLogTerm  uint32
 }
 type RequestVoteResponse struct {
-	Term        int32
+	Term        uint32
 	VoteGranted bool
 }
 
 type AppendEntriesRequest struct {
-	Term         int32
+	Term         uint32
 	LeaderId     string
-	PrevLogIndex int32
-	PrevLogTerm  int32
-	LeaderCommit int32
+	PrevLogIndex uint32
+	PrevLogTerm  uint32
+	LeaderCommit uint32
 }
 
 type AppendEntriesResponse struct {
-	Term    int32
+	Term    uint32
 	Success bool
 }

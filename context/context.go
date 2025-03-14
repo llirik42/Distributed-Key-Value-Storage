@@ -13,7 +13,7 @@ type Context struct {
 	ctxMutex sync.Mutex
 
 	cfg         config.RaftConfig
-	currentTerm int32
+	currentTerm uint32
 	voted       bool
 	votedFor    string
 	voteNumber  uint32
@@ -142,18 +142,18 @@ func (ctx *Context) IncrementVoteNumber() uint32 {
 	return ctx.voteNumber
 }
 
-func (ctx *Context) SetCurrentTerm(value int32) {
+func (ctx *Context) SetCurrentTerm(value uint32) {
 	ctx.resetVoted()
 	ctx.currentTerm = value
 }
 
-func (ctx *Context) IncrementCurrentTerm() int32 {
+func (ctx *Context) IncrementCurrentTerm() uint32 {
 	ctx.resetVoted()
 	ctx.currentTerm++
 	return ctx.currentTerm
 }
 
-func (ctx *Context) GetCurrentTerm() int32 {
+func (ctx *Context) GetCurrentTerm() uint32 {
 	return ctx.currentTerm
 }
 
