@@ -3,7 +3,7 @@ package domain
 type RequestVoteRequest struct {
 	Term         uint32
 	CandidateId  string
-	LastLogIndex uint64
+	LastLogIndex uint32
 	LastLogTerm  uint32
 }
 type RequestVoteResponse struct {
@@ -14,9 +14,9 @@ type RequestVoteResponse struct {
 type AppendEntriesRequest struct {
 	Term         uint32
 	LeaderId     string
-	PrevLogIndex uint64
+	PrevLogIndex uint32
 	PrevLogTerm  uint32
-	LeaderCommit uint64
+	LeaderCommit uint32
 }
 
 type AppendEntriesResponse struct {
