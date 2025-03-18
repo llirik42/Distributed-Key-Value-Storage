@@ -2,7 +2,7 @@ package grpc
 
 import (
 	pb "distributed-algorithms/generated/proto"
-	"distributed-algorithms/raft/transport"
+	"distributed-algorithms/src/raft/transport"
 	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"

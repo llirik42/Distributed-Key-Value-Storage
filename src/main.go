@@ -1,9 +1,9 @@
 package main
 
 import (
-	"distributed-algorithms/config"
-	"distributed-algorithms/raft/node"
-	"distributed-algorithms/raft/transport/grpc"
+	"distributed-algorithms/src/config"
+	"distributed-algorithms/src/raft/node"
+	"distributed-algorithms/src/raft/transport/grpc"
 	"log"
 	"os"
 )

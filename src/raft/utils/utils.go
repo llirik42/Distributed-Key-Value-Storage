@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"distributed-algorithms/context"
-	"distributed-algorithms/raft/domain"
+	"distributed-algorithms/src/context"
+	"distributed-algorithms/src/raft/domain"
 )
 
 func SendHeartbeat(ctx *context.Context) {

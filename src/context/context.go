@@ -1,9 +1,9 @@
 package context
 
 import (
-	"distributed-algorithms/config"
-	"distributed-algorithms/raft/domain"
-	"distributed-algorithms/raft/transport"
+	"distributed-algorithms/src/config"
+	"distributed-algorithms/src/raft/domain"
+	"distributed-algorithms/src/raft/transport"
 	"math/rand"
 	"sync"
 	"time"

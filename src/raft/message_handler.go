@@ -1,9 +1,9 @@
 package raft
 
 import (
-	"distributed-algorithms/context"
-	"distributed-algorithms/raft/domain"
-	"distributed-algorithms/raft/utils"
+	"distributed-algorithms/src/context"
+	"distributed-algorithms/src/raft/domain"
+	"distributed-algorithms/src/raft/utils"
 	"encoding/json"
 	"log"
 )

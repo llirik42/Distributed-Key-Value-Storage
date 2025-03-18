@@ -3,8 +3,8 @@ package grpc
 import (
 	"context"
 	pb "distributed-algorithms/generated/proto"
-	"distributed-algorithms/raft/domain"
-	"distributed-algorithms/raft/transport"
+	"distributed-algorithms/src/raft/domain"
+	"distributed-algorithms/src/raft/transport"
 	"fmt"
 	"google.golang.org/grpc"
 )

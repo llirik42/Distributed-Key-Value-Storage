@@ -1,7 +1,7 @@
 package transport
 
 import (
-	"distributed-algorithms/raft/domain"
+	"distributed-algorithms/src/raft/domain"
 )
 
 type HandleRequestForVoteRequest func(request *domain.RequestVoteRequest) (*domain.RequestVoteResponse, error)
