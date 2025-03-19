@@ -2,6 +2,7 @@ package grpc
 
 import (
 	pb "distributed-algorithms/generated/proto"
+	"distributed-algorithms/src/domain"
 	"distributed-algorithms/src/raft/dto"
 )
 
@@ -101,9 +102,9 @@ func mapLogEntriesToGRPC(entries *[]dto.LogEntry) []*pb.LogEntry {
 	return result
 }
 
-func mapCommandToGRPC(command *dto.Command) *pb.Command {
+func mapCommandToGRPC(command *domain.Command) *pb.Command {
 	switch command.Type {
-	case dto.Set:
+	case domain.Set:
 		return &pb.Command{
 			Type: &pb.Command_Set_{
 				Set: &pb.Command_Set{
@@ -112,7 +113,7 @@ func mapCommandToGRPC(command *dto.Command) *pb.Command {
 				},
 			},
 		}
-	case dto.Delete:
+	case domain.Delete:
 		return &pb.Command{
 			Type: &pb.Command_Delete_{
 				Delete: &pb.Command_Delete{
@@ -125,23 +126,23 @@ func mapCommandToGRPC(command *dto.Command) *pb.Command {
 	}
 }
 
-func mapCommandFromGRPC(command *pb.Command) *dto.Command {
+func mapCommandFromGRPC(command *pb.Command) *domain.Command {
 	switch command.Type.(type) {
 	case *pb.Command_Delete_:
 		cmd := command.GetDelete()
 
-		return &dto.Command{
+		return &domain.Command{
 			Key:   cmd.Key,
 			Value: nil,
-			Type:  dto.Delete,
+			Type:  domain.Delete,
 		}
 	case *pb.Command_Set_:
 		cmd := command.GetSet()
 
-		return &dto.Command{
+		return &domain.Command{
 			Key:   cmd.Key,
 			Value: mapValueFromGRPC(cmd.Value),
-			Type:  dto.Set,
+			Type:  domain.Set,
 		}
 	default: // Unknown type
 		return nil

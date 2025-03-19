@@ -2,7 +2,7 @@ package context
 
 import (
 	"distributed-algorithms/src/config"
-	"distributed-algorithms/src/raft/dto"
+	"distributed-algorithms/src/domain"
 	"distributed-algorithms/src/raft/transport"
 	"math/rand"
 	"sync"
@@ -12,33 +12,39 @@ import (
 type Context struct {
 	ctxMutex sync.Mutex
 
-	cfg         config.RaftConfig
-	currentTerm uint32
-	voted       bool
-	votedFor    string
-	voteNumber  uint32
-
 	nodeId   string
 	nodeRole int
 
+	currentTerm uint32
+
+	commitIndex uint64
+	lastApplied uint64
+	nextIndex   []uint64
+	matchIndex  []uint64
+
+	voted      bool
+	votedFor   string
+	voteNumber uint32
+
 	followerCandidateLoopTicker *time.Ticker
 	leaderLoopTicker            *time.Ticker
-
-	server  *transport.Server
-	clients []transport.Client
+	cfg                         config.RaftConfig
+	server                      *transport.Server
+	clients                     []transport.Client
 }
 
 func NewContext(cfg config.RaftConfig) *Context {
 	ctx := &Context{
-		cfg:                         cfg,
-		currentTerm:                 0,
-		voted:                       false,
-		votedFor:                    "", // Default value doesn't matter because voted = false by default
-		voteNumber:                  0,
-		nodeId:                      cfg.SelfNode.Id,
-		nodeRole:                    dto.Follower,
+		nodeId:      cfg.SelfNode.Id,
+		nodeRole:    domain.Follower,
+		currentTerm: 0,
+		voted:       false,
+		votedFor:    "", // Default value doesn't matter because voted = false by default
+		voteNumber:  0,
+
 		followerCandidateLoopTicker: nil,
 		leaderLoopTicker:            nil,
+		cfg:                         cfg,
 		server:                      nil,
 		clients:                     nil,
 	}
@@ -92,15 +98,15 @@ func (ctx *Context) GetNodeId() string {
 }
 
 func (ctx *Context) IsFollower() bool {
-	return ctx.hasRole(dto.Follower)
+	return ctx.hasRole(domain.Follower)
 }
 
 func (ctx *Context) IsCandidate() bool {
-	return ctx.hasRole(dto.Candidate)
+	return ctx.hasRole(domain.Candidate)
 }
 
 func (ctx *Context) IsLeader() bool {
-	return ctx.hasRole(dto.Leader)
+	return ctx.hasRole(domain.Leader)
 }
 
 func (ctx *Context) setRole(target int) {
@@ -158,19 +164,19 @@ func (ctx *Context) GetCurrentTerm() uint32 {
 }
 
 func (ctx *Context) BecomeFollower() {
-	ctx.setRole(dto.Follower)
+	ctx.setRole(domain.Follower)
 	ctx.leaderLoopTicker.Stop()
 	ctx.ResetNewElectionTimeout()
 }
 
 func (ctx *Context) BecomeCandidate() {
-	ctx.setRole(dto.Candidate)
+	ctx.setRole(domain.Candidate)
 	ctx.leaderLoopTicker.Stop()
 	ctx.ResetNewElectionTimeout()
 }
 
 func (ctx *Context) BecomeLeader() {
-	ctx.setRole(dto.Leader)
+	ctx.setRole(domain.Leader)
 	ctx.followerCandidateLoopTicker.Stop()
 	ctx.leaderLoopTicker.Reset(getBroadcastTimeout(&ctx.cfg))
 }
