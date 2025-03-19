@@ -1,4 +1,4 @@
-package ram
+package in_memory
 
 import (
 	"distributed-algorithms/src/key-value"
