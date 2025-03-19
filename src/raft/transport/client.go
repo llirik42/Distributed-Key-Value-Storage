@@ -1,17 +1,17 @@
 package transport
 
 import (
-	"distributed-algorithms/src/raft/domain"
+	"distributed-algorithms/src/raft/dto"
 )
 
-type HandleRequestForVoteResponse func(response *domain.RequestVoteResponse)
+type HandleRequestForVoteResponse func(response *dto.RequestVoteResponse)
 
-type HandleAppendEntriesResponse func(response *domain.AppendEntriesResponse)
+type HandleAppendEntriesResponse func(response *dto.AppendEntriesResponse)
 
 type Client interface {
-	SendRequestForVote(request domain.RequestVoteRequest) error
+	SendRequestForVote(request dto.RequestVoteRequest) error
 
-	SendAppendEntries(request domain.AppendEntriesRequest) error
+	SendAppendEntries(request dto.AppendEntriesRequest) error
 
 	Close() error
 }

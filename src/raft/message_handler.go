@@ -2,7 +2,7 @@ package raft
 
 import (
 	"distributed-algorithms/src/context"
-	"distributed-algorithms/src/raft/domain"
+	"distributed-algorithms/src/raft/dto"
 	"distributed-algorithms/src/raft/utils"
 	"encoding/json"
 	"log"
@@ -17,8 +17,8 @@ func NewMessageHandler(ctx *context.Context) *MessageHandler {
 }
 
 func (handler *MessageHandler) HandleRequestVoteRequest(
-	request *domain.RequestVoteRequest,
-) (*domain.RequestVoteResponse, error) {
+	request *dto.RequestVoteRequest,
+) (*dto.RequestVoteResponse, error) {
 	// TODO: add checks about candidate's log
 
 	ctx := handler.ctx
@@ -43,12 +43,12 @@ func (handler *MessageHandler) HandleRequestVoteRequest(
 		ctx.ResetNewElectionTimeout()
 	}
 
-	return &domain.RequestVoteResponse{Term: currentTerm, VoteGranted: voteGranted}, nil
+	return &dto.RequestVoteResponse{Term: currentTerm, VoteGranted: voteGranted}, nil
 }
 
 func (handler *MessageHandler) HandleAppendEntriesRequest(
-	request *domain.AppendEntriesRequest,
-) (*domain.AppendEntriesResponse, error) {
+	request *dto.AppendEntriesRequest,
+) (*dto.AppendEntriesResponse, error) {
 	// TODO: add checks related to log entries
 
 	ctx := handler.ctx
@@ -69,11 +69,11 @@ func (handler *MessageHandler) HandleAppendEntriesRequest(
 		ctx.SetCurrentTerm(requestTerm)
 	}
 
-	return &domain.AppendEntriesResponse{Term: currentTerm, Success: success}, nil
+	return &dto.AppendEntriesResponse{Term: currentTerm, Success: success}, nil
 }
 
 func (handler *MessageHandler) HandleRequestVoteResponse(
-	response *domain.RequestVoteResponse,
+	response *dto.RequestVoteResponse,
 ) {
 	ctx := handler.ctx
 
@@ -100,7 +100,7 @@ func (handler *MessageHandler) HandleRequestVoteResponse(
 }
 
 func (handler *MessageHandler) HandleAppendEntriesResponse(
-	response *domain.AppendEntriesResponse,
+	response *dto.AppendEntriesResponse,
 ) {
 	// TODO: add checks related to logs
 

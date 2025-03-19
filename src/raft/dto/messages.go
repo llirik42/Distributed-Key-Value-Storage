@@ -1,4 +1,4 @@
-package domain
+package dto
 
 type RequestVoteRequest struct {
 	Term         uint32
@@ -16,10 +16,13 @@ type AppendEntriesRequest struct {
 	LeaderId     string
 	PrevLogIndex uint64
 	PrevLogTerm  uint32
+	Entries      []LogEntry
 	LeaderCommit uint64
 }
 
 type AppendEntriesResponse struct {
-	Term    uint32
-	Success bool
+	Term          uint32
+	Success       bool
+	ConflictIndex uint64
+	ConflictTerm  uint32
 }

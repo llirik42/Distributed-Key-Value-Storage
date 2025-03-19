@@ -3,7 +3,6 @@ package grpc
 import (
 	"context"
 	pb "distributed-algorithms/generated/proto"
-	"distributed-algorithms/src/raft/domain"
 	"distributed-algorithms/src/raft/transport"
 	"fmt"
 	"google.golang.org/grpc"
@@ -20,39 +19,30 @@ type Server struct {
 
 func (server *Server) RequestForVote(
 	_ context.Context,
-	request *pb.RequestVoteRequest,
+	pbRequest *pb.RequestVoteRequest,
 ) (*pb.RequestVoteResponse, error) {
-	result, err := server.handleRequestForVoteRequest(&domain.RequestVoteRequest{
-		Term:         request.Term,
-		CandidateId:  request.CandidateId,
-		LastLogIndex: request.LastLogIndex,
-		LastLogTerm:  request.LastLogTerm,
-	})
+	req := MapRequestForVoteRequestFromGRPC(pbRequest)
+	resp, err := server.handleRequestForVoteRequest(req)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to handle request for vote %s: %w", request.String(), err)
+		return nil, fmt.Errorf("failed to handle request for vote %s: %w", pbRequest.String(), err)
 	}
 
-	return &pb.RequestVoteResponse{Term: result.Term, VoteGranted: result.VoteGranted}, nil
+	return MapRequestForVoteResponseToGRPC(resp), nil
 }
 
 func (server *Server) AppendEntries(
 	_ context.Context,
-	request *pb.AppendEntriesRequest,
+	pbRequest *pb.AppendEntriesRequest,
 ) (*pb.AppendEntriesResponse, error) {
-	result, err := server.handleAppendEntriesRequest(&domain.AppendEntriesRequest{
-		Term:         request.Term,
-		LeaderId:     request.LeaderId,
-		PrevLogIndex: request.PrevLogIndex,
-		PrevLogTerm:  request.PrevLogTerm,
-		LeaderCommit: request.LeaderCommit,
-	})
+	req := MapAppendEntriesRequestFromGRPC(pbRequest)
+	resp, err := server.handleAppendEntriesRequest(req)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to handle append-entries request %s: %w", request.String(), err)
+		return nil, fmt.Errorf("failed to handle append-entries request %s: %w", pbRequest.String(), err)
 	}
 
-	return &pb.AppendEntriesResponse{Term: result.Term, Success: result.Success}, nil
+	return MapAppendEntriesResponseToGRPC(resp), nil
 }
 
 func (server *Server) Listen() error {
