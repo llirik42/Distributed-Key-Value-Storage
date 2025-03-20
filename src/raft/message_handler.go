@@ -92,7 +92,7 @@ func (handler *MessageHandler) HandleRequestVoteResponse(
 	// Got new vote
 	voteNumber := ctx.IncrementVoteNumber()
 	clusterSize := ctx.GetClusterSize()
-
+	
 	if voteNumber > clusterSize/2 {
 		ctx.BecomeLeader()
 		utils.SendHeartbeat(ctx)
