@@ -11,7 +11,10 @@ type Storage struct {
 }
 
 func NewStorage() key_value.Storage {
-	return &Storage{storage: make(map[string]any)}
+	return &Storage{
+		storage: make(map[string]any),
+		mutex:   sync.RWMutex{},
+	}
 }
 
 func (s *Storage) Get(key string) (key_value.Value, error) {
