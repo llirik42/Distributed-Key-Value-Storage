@@ -5,7 +5,7 @@ type Value struct {
 	Exists bool
 }
 
-type KeyValueStorage interface {
+type Storage interface {
 	Get(key string) (Value, error)
 
 	Set(key string, value any) error

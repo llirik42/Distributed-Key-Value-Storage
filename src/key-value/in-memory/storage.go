@@ -10,7 +10,7 @@ type Storage struct {
 	mutex   sync.RWMutex
 }
 
-func NewStorage() key_value.KeyValueStorage {
+func NewStorage() key_value.Storage {
 	return &Storage{storage: make(map[string]any)}
 }
 
