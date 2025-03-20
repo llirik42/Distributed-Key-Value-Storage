@@ -1,4 +1,4 @@
-package restapi
+package common
 
 const (
 	Success   = "success"

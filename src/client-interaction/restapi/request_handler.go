@@ -1,93 +1,73 @@
 package restapi
 
 import (
+	"distributed-algorithms/src/client-interaction/common"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
 type RequestHandler struct {
+	commonRequestHandler *common.RequestHandler
+}
+
+func NewRequestHandler(commonRequestHandler *common.RequestHandler) *RequestHandler {
+	return &RequestHandler{
+		commonRequestHandler: commonRequestHandler,
+	}
 }
 
 func (handler *RequestHandler) SetKey(c *gin.Context) {
-	// TODO: implement
+	key := c.Param("key")
 
-	request := SetKeyRequest{}
-	err := c.ShouldBindJSON(&request)
+	restapiRequest := SetKeyRequest{}
+	if err := c.ShouldBindJSON(&restapiRequest); err != nil {
+		c.JSON(http.StatusBadRequest, common.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	request := common.SetKeyRequest{
+		Key:   key,
+		Value: restapiRequest.Value,
+	}
+	response, err := handler.commonRequestHandler.HandleSetKey(&request)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, common.ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	isLeader := false
-	//key := c.Param("key")
-
-	if !isLeader {
-		c.JSON(http.StatusOK, SetKeyResponse{
-			Code:     NotLeader,
-			LeaderId: "Node-1", // TODO
-		})
-		return
-	}
-
-	// TODO: implement setting value of key
-	c.JSON(http.StatusOK, SetKeyResponse{
-		Code:     Success,
-		LeaderId: "Node-1", // TODO
-	})
+	c.JSON(http.StatusOK, response)
 }
 
 func (handler *RequestHandler) GetKey(c *gin.Context) {
-	// TODO: implement
+	key := c.Param("key")
 
-	//key := c.Param("key")
+	request := common.GetKeyRequest{
+		Key: key,
+	}
 
-	isLeader := false // TODO
+	response, err := handler.commonRequestHandler.HandleGetKey(&request)
 
-	if !isLeader {
-		c.JSON(http.StatusOK, GetKeyResponse{
-			Value:    nil,
-			Code:     NotLeader,
-			LeaderId: "Node-1", // TODO
-		})
+	if err != nil {
+		c.JSON(http.StatusBadRequest, common.ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, GetKeyResponse{
-		Value:    "value", // TODO: implement getting value of key
-		Code:     Success,
-		LeaderId: "Node-1", // TODO
-	})
+	c.JSON(http.StatusOK, response)
 }
 
 func (handler *RequestHandler) DeleteKey(c *gin.Context) {
-	// TODO: implement
+	key := c.Param("key")
 
-	//key := c.Param("key")
+	request := common.DeleteKeyRequest{
+		Key: key,
+	}
 
-	isLeader := false // TODO
-
-	if !isLeader {
-		c.JSON(http.StatusOK, DeleteKeyResponse{
-			Code:     NotLeader,
-			LeaderId: "Node-1", // TODO
-		})
+	response, err := handler.commonRequestHandler.HandleDeleteKey(&request)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, common.ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	// TODO: implement deleting key
-
-	c.JSON(http.StatusOK, DeleteKeyResponse{
-		Code:     Success,
-		LeaderId: "Node-1", // TODO
-	})
-}
-
-func (handler *RequestHandler) GetClusterInfo(c *gin.Context) {
-	// TODO: implement
-	c.JSON(http.StatusOK, ClusterInfoResponse{
-		Code:     Success,
-		LeaderId: "Node-1", // TODO
-		Info:     struct{ currentTerm int }{currentTerm: 5},
-	})
+	c.JSON(http.StatusOK, response)
 }
