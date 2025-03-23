@@ -10,6 +10,7 @@ import (
 )
 
 type Client struct {
+	index                        int
 	gRPCClient                   pb.RaftServiceClient
 	gRPCConnection               *grpc.ClientConn
 	handleRequestForVoteResponse transport.HandleRequestForVoteResponse
@@ -25,7 +26,7 @@ func (client *Client) SendRequestForVote(request dto.RequestVoteRequest) error {
 	}
 
 	response := MapRequestForVoteResponseFromGRPC(pbResponse)
-	client.handleRequestForVoteResponse(response)
+	client.handleRequestForVoteResponse(client, response)
 
 	return nil
 }
@@ -39,9 +40,13 @@ func (client *Client) SendAppendEntries(request dto.AppendEntriesRequest) error 
 	}
 
 	response := MapAppendEntriesResponseFromGRPC(pbResponse)
-	client.handleAppendEntriesResponse(response)
+	client.handleAppendEntriesResponse(client, response)
 
 	return nil
+}
+
+func (client *Client) GetIndex() int {
+	return client.index
 }
 
 func (client *Client) Close() error {

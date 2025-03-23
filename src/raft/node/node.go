@@ -36,8 +36,9 @@ func StartRaftNode(
 
 	// Create connections to other nodes
 	var clients []transport.Client
-	for _, nodeAddress := range config.OtherNodes {
+	for index, nodeAddress := range config.OtherNodes {
 		newClient, errClient := raftClientFactory.NewClient(
+			index,
 			nodeAddress,
 			messageHandler.HandleRequestVoteResponse,
 			messageHandler.HandleAppendEntriesResponse,
@@ -60,7 +61,6 @@ func StartRaftNode(
 	ctx.SetClients(clients)
 
 	ctx.StartTickers()
-	ctx.BecomeFollower()
 	go loops.LeaderLoop(ctx)
 	go loops.FollowerCandidateLoop(ctx)
 

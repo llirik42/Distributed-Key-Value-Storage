@@ -17,6 +17,7 @@ func NewClientFactory() *ClientFactory {
 }
 
 func (factory ClientFactory) NewClient(
+	index int,
 	address string,
 	handleRequestForVoteResponse transport.HandleRequestForVoteResponse,
 	handleAppendEntriesResponse transport.HandleAppendEntriesResponse,
@@ -42,6 +43,7 @@ func (factory ClientFactory) NewClient(
 	}
 
 	client := &Client{
+		index:                        index,
 		gRPCClient:                   pb.NewRaftServiceClient(gRPCConnection),
 		gRPCConnection:               gRPCConnection,
 		handleRequestForVoteResponse: handleRequestForVoteResponse,
