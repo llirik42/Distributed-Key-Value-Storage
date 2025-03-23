@@ -11,6 +11,10 @@ import (
 
 type ServerFactory struct{}
 
+func NewServerFactory() *ServerFactory {
+	return &ServerFactory{}
+}
+
 func (factory ServerFactory) NewServer(
 	address string,
 	handleRequestForVoteRequest transport.HandleRequestForVoteRequest,

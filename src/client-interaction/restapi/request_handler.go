@@ -21,7 +21,7 @@ func (handler *RequestHandler) SetKey(c *gin.Context) {
 
 	restapiRequest := SetKeyRequest{}
 	if err := c.ShouldBindJSON(&restapiRequest); err != nil {
-		c.JSON(http.StatusBadRequest, common.ErrorResponse{Error: err.Error()})
+		c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 		return
 	}
 
@@ -32,7 +32,7 @@ func (handler *RequestHandler) SetKey(c *gin.Context) {
 	response, err := handler.commonRequestHandler.HandleSetKey(&request)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, common.ErrorResponse{Error: err.Error()})
+		c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 		return
 	}
 
@@ -49,7 +49,7 @@ func (handler *RequestHandler) GetKey(c *gin.Context) {
 	response, err := handler.commonRequestHandler.HandleGetKey(&request)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, common.ErrorResponse{Error: err.Error()})
+		c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 		return
 	}
 
@@ -65,7 +65,7 @@ func (handler *RequestHandler) DeleteKey(c *gin.Context) {
 
 	response, err := handler.commonRequestHandler.HandleDeleteKey(&request)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, common.ErrorResponse{Error: err.Error()})
+		c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 		return
 	}
 

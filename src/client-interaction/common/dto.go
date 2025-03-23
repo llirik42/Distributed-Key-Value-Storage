@@ -28,7 +28,3 @@ type DeleteKeyResponse struct {
 	Code     string
 	LeaderId string
 }
-
-type ErrorResponse struct {
-	Error string
-}

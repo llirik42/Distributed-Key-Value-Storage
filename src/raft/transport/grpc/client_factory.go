@@ -12,6 +12,10 @@ import (
 
 type ClientFactory struct{}
 
+func NewClientFactory() *ClientFactory {
+	return &ClientFactory{}
+}
+
 func (factory ClientFactory) NewClient(
 	address string,
 	handleRequestForVoteResponse transport.HandleRequestForVoteResponse,

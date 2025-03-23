@@ -2,6 +2,7 @@ package context
 
 import (
 	"distributed-algorithms/src/config"
+	"distributed-algorithms/src/log"
 	"distributed-algorithms/src/raft/transport"
 	"math/rand"
 	"sync"
@@ -82,6 +83,14 @@ func (ctx *Context) GetLeaderLoopTicker() *time.Ticker {
 
 func (ctx *Context) ResetNewElectionTimeout() {
 	ctx.followerCandidateLoopTicker.Reset(getRandomElectionTimeout(&ctx.cfg))
+}
+
+func (ctx *Context) GetLeaderId() string {
+	return "123" // TODO
+}
+
+func (ctx *Context) PushCommand(cmd *log.Command) error {
+	return nil
 }
 
 func (ctx *Context) GetClusterSize() uint32 {

@@ -13,10 +13,10 @@ import (
 
 func StartRaftNode(
 	config config.RaftConfig,
+	ctx *context.Context,
 	raftServerFactory transport.ServerFactory,
 	raftClientFactory transport.ClientFactory,
 ) error {
-	ctx := context.NewContext(config)
 	messageHandler := raft.NewMessageHandler(ctx)
 
 	// Create and start server
@@ -65,7 +65,7 @@ func StartRaftNode(
 	go loops.FollowerCandidateLoop(ctx)
 
 	a, _ := json.MarshalIndent(config, "", " ")
-	log.Printf("Node is starting with configuration %s\n", a)
+	log.Printf("node is starting with configuration %s", a)
 
 	if errListen := server.Listen(); errListen != nil {
 		return fmt.Errorf("node cannot start listen RAFT-connections: %w", errListen)

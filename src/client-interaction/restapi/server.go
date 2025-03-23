@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func StartServer(handler *common.RequestHandler, config config.RESTConfig) error {
+func StartServer(handler *common.RequestHandler, config config.RestConfig) error {
 	router := gin.Default()
 
 	restapiHandler := NewRequestHandler(handler)

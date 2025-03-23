@@ -8,6 +8,7 @@ import (
 
 type Config struct {
 	RaftConfig RaftConfig
+	RestConfig RestConfig
 }
 
 func NewConfiguration(filePath string) (*Config, error) {
