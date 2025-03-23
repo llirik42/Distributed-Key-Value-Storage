@@ -81,10 +81,6 @@ message AppendEntriesRequest {
 message AppendEntriesResponse {
   uint32 term = 1;
   bool success = 2;
-
-  // Optimization
-  uint64 conflictIndex = 3;
-  uint32 conflictTerm = 4;
 }
 
 service RaftService {
