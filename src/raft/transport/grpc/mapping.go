@@ -2,7 +2,7 @@ package grpc
 
 import (
 	pb "distributed-algorithms/generated/proto"
-	"distributed-algorithms/src/domain"
+	"distributed-algorithms/src/log"
 	"distributed-algorithms/src/raft/dto"
 )
 
@@ -50,11 +50,10 @@ func MapAppendEntriesRequestToGRPC(msg *dto.AppendEntriesRequest) *pb.AppendEntr
 }
 
 func MapAppendEntriesRequestFromGRPC(msg *pb.AppendEntriesRequest) *dto.AppendEntriesRequest {
-	mappedEntries := make([]dto.LogEntry, len(msg.Entries))
+	mappedEntries := make([]log.Entry, len(msg.Entries))
 
 	for i, el := range msg.Entries {
-		mappedEntries[i] = dto.LogEntry{
-			Index:   el.Index,
+		mappedEntries[i] = log.Entry{
 			Term:    el.Term,
 			Command: *mapCommandFromGRPC(el.Command),
 		}
@@ -88,12 +87,11 @@ func MapAppendEntriesResponseFromGRPC(msg *pb.AppendEntriesResponse) *dto.Append
 	}
 }
 
-func mapLogEntriesToGRPC(entries *[]dto.LogEntry) []*pb.LogEntry {
+func mapLogEntriesToGRPC(entries *[]log.Entry) []*pb.LogEntry {
 	result := make([]*pb.LogEntry, len(*entries))
 
 	for i, el := range *entries {
 		result[i] = &pb.LogEntry{
-			Index:   el.Index,
 			Term:    el.Term,
 			Command: mapCommandToGRPC(&el.Command),
 		}
@@ -102,9 +100,9 @@ func mapLogEntriesToGRPC(entries *[]dto.LogEntry) []*pb.LogEntry {
 	return result
 }
 
-func mapCommandToGRPC(command *domain.Command) *pb.Command {
+func mapCommandToGRPC(command *log.Command) *pb.Command {
 	switch command.Type {
-	case domain.Set:
+	case log.Set:
 		return &pb.Command{
 			Type: &pb.Command_Set_{
 				Set: &pb.Command_Set{
@@ -113,7 +111,7 @@ func mapCommandToGRPC(command *domain.Command) *pb.Command {
 				},
 			},
 		}
-	case domain.Delete:
+	case log.Delete:
 		return &pb.Command{
 			Type: &pb.Command_Delete_{
 				Delete: &pb.Command_Delete{
@@ -126,23 +124,23 @@ func mapCommandToGRPC(command *domain.Command) *pb.Command {
 	}
 }
 
-func mapCommandFromGRPC(command *pb.Command) *domain.Command {
+func mapCommandFromGRPC(command *pb.Command) *log.Command {
 	switch command.Type.(type) {
 	case *pb.Command_Delete_:
 		cmd := command.GetDelete()
 
-		return &domain.Command{
+		return &log.Command{
 			Key:   cmd.Key,
 			Value: nil,
-			Type:  domain.Delete,
+			Type:  log.Delete,
 		}
 	case *pb.Command_Set_:
 		cmd := command.GetSet()
 
-		return &domain.Command{
+		return &log.Command{
 			Key:   cmd.Key,
 			Value: mapValueFromGRPC(cmd.Value),
-			Type:  domain.Set,
+			Type:  log.Set,
 		}
 	default: // Unknown type
 		return nil

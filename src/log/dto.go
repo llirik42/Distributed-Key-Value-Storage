@@ -1,4 +1,4 @@
-package domain
+package log
 
 const (
 	Set = iota
@@ -9,4 +9,9 @@ type Command struct {
 	Key   string
 	Value any
 	Type  int
+}
+
+type Entry struct {
+	Term    uint32
+	Command Command
 }

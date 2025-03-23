@@ -2,7 +2,6 @@ package context
 
 import (
 	"distributed-algorithms/src/config"
-	"distributed-algorithms/src/domain"
 	"distributed-algorithms/src/raft/transport"
 	"math/rand"
 	"sync"
@@ -36,7 +35,7 @@ type Context struct {
 func NewContext(cfg config.RaftConfig) *Context {
 	ctx := &Context{
 		nodeId:      cfg.SelfNode.Id,
-		nodeRole:    domain.Follower,
+		nodeRole:    Follower,
 		currentTerm: 0,
 		voted:       false,
 		votedFor:    "", // Default value doesn't matter because voted = false by default
@@ -98,15 +97,15 @@ func (ctx *Context) GetNodeId() string {
 }
 
 func (ctx *Context) IsFollower() bool {
-	return ctx.hasRole(domain.Follower)
+	return ctx.hasRole(Follower)
 }
 
 func (ctx *Context) IsCandidate() bool {
-	return ctx.hasRole(domain.Candidate)
+	return ctx.hasRole(Candidate)
 }
 
 func (ctx *Context) IsLeader() bool {
-	return ctx.hasRole(domain.Leader)
+	return ctx.hasRole(Leader)
 }
 
 func (ctx *Context) setRole(target int) {
@@ -164,19 +163,19 @@ func (ctx *Context) GetCurrentTerm() uint32 {
 }
 
 func (ctx *Context) BecomeFollower() {
-	ctx.setRole(domain.Follower)
+	ctx.setRole(Follower)
 	ctx.leaderLoopTicker.Stop()
 	ctx.ResetNewElectionTimeout()
 }
 
 func (ctx *Context) BecomeCandidate() {
-	ctx.setRole(domain.Candidate)
+	ctx.setRole(Candidate)
 	ctx.leaderLoopTicker.Stop()
 	ctx.ResetNewElectionTimeout()
 }
 
 func (ctx *Context) BecomeLeader() {
-	ctx.setRole(domain.Leader)
+	ctx.setRole(Leader)
 	ctx.followerCandidateLoopTicker.Stop()
 	ctx.leaderLoopTicker.Reset(getBroadcastTimeout(&ctx.cfg))
 }
