@@ -5,6 +5,11 @@ const (
 	Delete
 )
 
+type EntryMetadata struct {
+	Term  uint32
+	Index uint64
+}
+
 type Command struct {
 	Key   string
 	Value any

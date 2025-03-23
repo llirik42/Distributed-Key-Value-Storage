@@ -32,11 +32,13 @@ func startNewTerm(ctx *context.Context) {
 }
 
 func offerCandidacy(ctx *context.Context, currentTerm uint32) {
+	lastLogEntryMetadata := ctx.GetLastLogEntryMetadata()
+
 	request := dto.RequestVoteRequest{
 		Term:         currentTerm,
 		CandidateId:  ctx.GetNodeId(),
-		LastLogIndex: 0,
-		LastLogTerm:  0,
+		LastLogIndex: lastLogEntryMetadata.Index,
+		LastLogTerm:  lastLogEntryMetadata.Term,
 	}
 
 	for _, client := range ctx.GetClients() {

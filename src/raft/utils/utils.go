@@ -10,9 +10,9 @@ func SendHeartbeat(ctx *context.Context) {
 	request := dto.AppendEntriesRequest{
 		Term:         ctx.GetCurrentTerm(),
 		LeaderId:     ctx.GetNodeId(),
-		PrevLogIndex: 0,                    // TODO
-		PrevLogTerm:  0,                    // TODO
-		LeaderCommit: 0,                    // TODO
+		PrevLogIndex: 0, // TODO
+		PrevLogTerm:  0, // TODO
+		LeaderCommit: ctx.GetCommitIndex(),
 		Entries:      make([]log.Entry, 0), // TODO
 	}
 

@@ -26,6 +26,7 @@ type Context struct {
 	votedFor   string
 	voteNumber uint32
 
+	log                         log.Log
 	followerCandidateLoopTicker *time.Ticker
 	leaderLoopTicker            *time.Ticker
 	cfg                         config.RaftConfig
@@ -60,6 +61,10 @@ func (ctx *Context) Unlock() {
 	ctx.ctxMutex.Unlock()
 }
 
+func (ctx *Context) SetLog(log log.Log) {
+	ctx.log = log
+}
+
 func (ctx *Context) SetServer(server *transport.Server) {
 	ctx.server = server
 }
@@ -89,8 +94,39 @@ func (ctx *Context) GetLeaderId() string {
 	return "123" // TODO
 }
 
+func (ctx *Context) GetLogEntryTerm(index uint64) (uint32, bool) {
+	term, exists, err := ctx.log.GetLogEntryTerm(index)
+
+	if err != nil {
+		// TODO: handle error (panic?)
+		return 0, false
+	}
+
+	return term, exists
+}
+
 func (ctx *Context) PushCommand(cmd *log.Command) error {
+
 	return nil
+}
+
+func (ctx *Context) GetLastLogEntryMetadata() log.EntryMetadata {
+	metadata, err := ctx.log.GetLastLogEntryMetadata()
+
+	if err != nil {
+		// TODO: handle error (panic?)
+		return log.EntryMetadata{}
+	}
+
+	return metadata
+}
+
+func (ctx *Context) ApplyByCommitIndex() {
+
+}
+
+func (ctx *Context) GetCommitIndex() uint64 {
+	return ctx.commitIndex
 }
 
 func (ctx *Context) GetClusterSize() uint32 {

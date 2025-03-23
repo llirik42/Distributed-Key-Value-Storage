@@ -8,7 +8,7 @@ import (
 	"distributed-algorithms/src/key-value/in-memory"
 	"distributed-algorithms/src/raft/node"
 	"distributed-algorithms/src/raft/transport/grpc"
-	"log"
+	logging "log"
 	"os"
 )
 
@@ -18,7 +18,7 @@ func main() {
 
 	cfg, err := config.NewConfiguration(filePath)
 	if err != nil {
-		log.Fatalf("error loading configuration: %v", err)
+		logging.Fatalf("error loading configuration: %v", err)
 	}
 
 	ctx := context.NewContext(cfg.RaftConfig)
@@ -27,7 +27,7 @@ func main() {
 
 	go func() {
 		if err := node.StartRaftNode(cfg.RaftConfig, ctx, serverFactory, clientFactory); err != nil {
-			log.Fatalf("error starting RAFT-node: %v", err)
+			logging.Fatalf("error starting RAFT-node: %v", err)
 		}
 	}()
 
@@ -35,6 +35,6 @@ func main() {
 	requestHandler := common.NewRequestHandler(ctx, &storage)
 
 	if err := restapi.StartServer(requestHandler, cfg.RestConfig); err != nil {
-		log.Fatalf("error starting restapi: %v", err)
+		logging.Fatalf("error starting restapi: %v", err)
 	}
 }
