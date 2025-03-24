@@ -41,9 +41,10 @@ func NewContext(cfg config.RaftConfig) *Context {
 	otherNodesCount := len(cfg.OtherNodes)
 
 	ctx := &Context{
-		ctxMutex:                    sync.Mutex{},
-		nodeId:                      cfg.SelfNode.Id,
-		nodeRole:                    Follower,
+		ctxMutex: sync.Mutex{},
+		nodeId:   cfg.SelfNode.Id,
+		nodeRole: 0, // Default value doesn't matter,
+		// because BecomeFollower should be called before using context
 		currentTerm:                 0,
 		commitIndex:                 0,
 		lastApplied:                 0,

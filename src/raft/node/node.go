@@ -58,8 +58,9 @@ func StartRaftNode(
 	}
 
 	ctx.SetClients(clients)
-
 	ctx.StartTickers()
+	ctx.BecomeFollower()
+
 	go loops.LeaderLoop(ctx)
 	go loops.FollowerCandidateLoop(ctx)
 
