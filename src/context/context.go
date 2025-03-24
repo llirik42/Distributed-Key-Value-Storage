@@ -2,8 +2,10 @@ package context
 
 import (
 	"distributed-algorithms/src/config"
+	key_value "distributed-algorithms/src/key-value"
 	"distributed-algorithms/src/log"
 	"distributed-algorithms/src/raft/transport"
+	"fmt"
 	"math/rand"
 	"sync"
 	"time"
@@ -14,6 +16,7 @@ type Context struct {
 
 	nodeId   string
 	nodeRole int
+	leaderId string
 
 	currentTerm uint32
 
@@ -28,6 +31,7 @@ type Context struct {
 	voteNumber uint32
 
 	log                         log.Log
+	storage                     key_value.Storage
 	followerCandidateLoopTicker *time.Ticker
 	leaderLoopTicker            *time.Ticker
 	cfg                         config.RaftConfig
@@ -104,6 +108,10 @@ func (ctx *Context) ResetElectionTimeout() {
 	ctx.followerCandidateLoopTicker.Reset(getRandomElectionTimeout(&ctx.cfg))
 }
 
+func (ctx *Context) SetLeaderId(value string) {
+	ctx.leaderId = value
+}
+
 func (ctx *Context) GetLeaderId() string {
 	return "123" // TODO
 }
@@ -124,19 +132,15 @@ func (ctx *Context) GetLog() log.Log {
 	return ctx.log
 }
 
-func (ctx *Context) GetLogEntryTerm(index uint64) (uint32, bool) {
-	term, exists, err := ctx.log.GetLogEntryTerm(index)
-
-	if err != nil {
-		// TODO: handle error (panic?)
-		return 0, false
+func (ctx *Context) PushCommand(cmd log.Command) {
+	entry := log.Entry{
+		Term:    ctx.currentTerm,
+		Command: cmd,
 	}
 
-	return term, exists
-}
-
-func (ctx *Context) PushCommand(cmd *log.Command) error {
-	// TODO:
+	if err := ctx.log.PushLogEntry(&entry); err != nil {
+		return fmt.Errorf("failed to push command to log: %v", err)
+	}
 
 	return nil
 }
@@ -158,18 +162,11 @@ func (ctx *Context) ApplyByCommitIndex() {
 
 func (ctx *Context) SetCommitIndex(value uint64) {
 	ctx.commitIndex = value
-
-	// TODO: If commitIndex > lastApplied: increment lastApplied, apply
-	//	log[lastApplied] to state machine (§5.3)
-
+	ctx.applyCommitedEntries()
 }
 
 func (ctx *Context) GetCommitIndex() uint64 {
 	return ctx.commitIndex
-}
-
-func (ctx *Context) AddLogEntry(entry *log.Entry, index uint64) {
-	// TODO:
 }
 
 func (ctx *Context) GetLogEntries(startingIndex uint64) []log.Entry {
@@ -206,31 +203,7 @@ func (ctx *Context) GetLastSentIndex(clientIndex int) uint64 {
 func (ctx *Context) SetMatchIndex(clientIndex int, value uint64) {
 	ctx.matchIndex[clientIndex] = value
 
-	// Update commitIndex
-	currentTerm := ctx.currentTerm
-	clusterSizeHalved := ctx.GetClusterSize() / 2
-	lastLogIndex := ctx.log.GetLastIndex()
-	newCommitIndex := ctx.commitIndex
-	for i := ctx.commitIndex + 1; i <= lastLogIndex; i++ {
-		var count uint32 = 1 // By default, include current node (leader)
-		for _, v := range ctx.matchIndex {
-			if v >= i {
-				count++
-			}
-		}
-
-		if count <= clusterSizeHalved {
-			break
-		}
-
-		term := ctx.log.GetLogEntryTerm(i)
-		if term != currentTerm {
-			continue
-		}
-
-		newCommitIndex = i
-	}
-
+	newCommitIndex := ctx.findNewCommitIndex()
 	if newCommitIndex != ctx.commitIndex {
 		ctx.SetCommitIndex(newCommitIndex)
 	}
@@ -320,9 +293,18 @@ func (ctx *Context) BecomeCandidate() {
 
 func (ctx *Context) BecomeLeader() {
 	ctx.setRole(Leader)
+	ctx.leaderId = ctx.nodeId
 	ctx.followerCandidateLoopTicker.Stop()
 	ctx.leaderLoopTicker.Reset(getBroadcastTimeout(&ctx.cfg))
 	ctx.initNextAndMatchIndexes()
+}
+
+func (ctx *Context) applyCommitedEntries() {
+	for i := ctx.lastApplied + 1; i <= ctx.commitIndex; i++ {
+		entry := ctx.log.GetLogEntry(i)
+		log.ApplyCommand(&entry.Command, ctx.storage)
+		ctx.lastApplied++
+	}
 }
 
 func (ctx *Context) initNextAndMatchIndexes() {
@@ -335,6 +317,37 @@ func (ctx *Context) initNextAndMatchIndexes() {
 		ctx.nextIndex[i] = lastLogIndex + 1
 		ctx.matchIndex[i] = 0
 	}
+}
+
+func (ctx *Context) findNewCommitIndex() uint64 {
+	currentTerm := ctx.currentTerm
+	clusterSizeHalved := ctx.GetClusterSize() / 2
+
+	lastLogEntryIndex := ctx.log.GetLastIndex()
+
+	newCommitIndex := ctx.commitIndex
+
+	for i := ctx.commitIndex + 1; i <= lastLogEntryIndex; i++ {
+		var count uint32 = 1 // By default, include current node (leader)
+		for _, v := range ctx.matchIndex {
+			if v >= i {
+				count++
+			}
+		}
+
+		if count <= clusterSizeHalved {
+			break
+		}
+
+		term := ctx.log.GetLogEntryTerm(i)
+		if term != currentTerm {
+			continue
+		}
+
+		newCommitIndex = i
+	}
+
+	return newCommitIndex
 }
 
 func (ctx *Context) resetVoted() {

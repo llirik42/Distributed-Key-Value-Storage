@@ -6,9 +6,9 @@ type Value struct {
 }
 
 type Storage interface {
-	Get(key string) (Value, error)
+	Get(key string) Value
 
-	Set(key string, value any) error
+	Set(key string, value any)
 
-	Delete(key string) error
+	Delete(key string)
 }

@@ -5,21 +5,15 @@ import (
 	"fmt"
 )
 
-func applyCommand(cmd *Command, storage key_value.Storage) error {
+func ApplyCommand(cmd *Command, storage key_value.Storage) {
 	switch cmd.Type {
 	case Set:
-		if err := storage.Set(cmd.Key, cmd.Value); err != nil {
-			return fmt.Errorf("setting value %v of key %v failed: %v", cmd.Value, cmd.Key, err)
-		}
+		storage.Set(cmd.Key, cmd.Value)
 	case Delete:
-		if err := storage.Delete(cmd.Key); err != nil {
-			return fmt.Errorf("deleting key %v failed: %v", cmd.Key, err)
-		}
+		storage.Delete(cmd.Key)
 	default:
-		return fmt.Errorf("unknown type of comman %v", cmd)
+		panic(fmt.Errorf("unknown type of command %+v", *cmd))
 	}
-
-	return nil
 }
 
 // CompareEntries Compares two log entries by term and index

@@ -17,7 +17,7 @@ func NewStorage() key_value.Storage {
 	}
 }
 
-func (s *Storage) Get(key string) (key_value.Value, error) {
+func (s *Storage) Get(key string) key_value.Value {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
@@ -28,19 +28,17 @@ func (s *Storage) Get(key string) (key_value.Value, error) {
 		Exists: ok,
 	}
 
-	return value, nil
+	return value
 }
 
-func (s *Storage) Set(key string, value any) error {
+func (s *Storage) Set(key string, value any) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	s.storage[key] = value
-	return nil
 }
 
-func (s *Storage) Delete(key string) error {
+func (s *Storage) Delete(key string) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	delete(s.storage, key)
-	return nil
 }

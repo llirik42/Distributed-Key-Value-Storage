@@ -99,6 +99,7 @@ func (handler *MessageHandler) HandleAppendEntriesRequest(
 
 	// Choose new randomized election timeout
 	ctx.ResetElectionTimeout()
+	ctx.SetLeaderId(request.LeaderId)
 
 	return &dto.AppendEntriesResponse{Term: currentTerm, Success: true}, nil
 }
