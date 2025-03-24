@@ -5,14 +5,14 @@ import (
 	"fmt"
 )
 
-func ApplyCommand(cmd *Command, storage key_value.Storage) {
+func ApplyCommand(cmd Command, storage key_value.Storage) {
 	switch cmd.Type {
 	case Set:
 		storage.Set(cmd.Key, cmd.Value)
 	case Delete:
 		storage.Delete(cmd.Key)
 	default:
-		panic(fmt.Errorf("unknown type of command %+v", *cmd))
+		panic(fmt.Errorf("unknown type of command %+v", cmd))
 	}
 }
 

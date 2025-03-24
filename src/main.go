@@ -5,7 +5,8 @@ import (
 	"distributed-algorithms/src/client-interaction/restapi"
 	"distributed-algorithms/src/config"
 	"distributed-algorithms/src/context"
-	"distributed-algorithms/src/key-value/in-memory"
+	kv "distributed-algorithms/src/key-value/in-memory"
+	log "distributed-algorithms/src/log/in-memory"
 	"distributed-algorithms/src/raft/node"
 	"distributed-algorithms/src/raft/transport/grpc"
 	logging "log"
@@ -22,6 +23,9 @@ func main() {
 	}
 
 	ctx := context.NewContext(cfg.RaftConfig)
+	ctx.SetKeyValueStorage(kv.NewStorage())
+	ctx.SetLogStorage(log.NewStorage())
+
 	serverFactory := grpc.NewServerFactory()
 	clientFactory := grpc.NewClientFactory()
 
@@ -31,8 +35,7 @@ func main() {
 		}
 	}()
 
-	storage := in_memory.NewStorage()
-	requestHandler := common.NewRequestHandler(ctx, &storage)
+	requestHandler := common.NewRequestHandler(ctx)
 
 	if err := restapi.StartServer(requestHandler, cfg.RestConfig); err != nil {
 		logging.Fatalf("error starting restapi: %v", err)

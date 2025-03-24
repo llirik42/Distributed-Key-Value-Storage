@@ -4,7 +4,6 @@ import (
 	"distributed-algorithms/src/context"
 	"distributed-algorithms/src/key-value"
 	"distributed-algorithms/src/log"
-	"fmt"
 )
 
 type RequestHandler struct {
@@ -12,10 +11,9 @@ type RequestHandler struct {
 	storage key_value.Storage
 }
 
-func NewRequestHandler(context *context.Context, keyValueStorage *key_value.Storage) *RequestHandler {
+func NewRequestHandler(ctx *context.Context) *RequestHandler {
 	return &RequestHandler{
-		ctx:     context,
-		storage: *keyValueStorage,
+		ctx: ctx,
 	}
 }
 
@@ -34,10 +32,7 @@ func (handler *RequestHandler) SetKey(request *SetKeyRequest) (*SetKeyResponse, 
 	}
 
 	cmd := setKeyRequestToCommand(request)
-
-	if err := ctx.PushCommand(&cmd); err != nil {
-		return nil, fmt.Errorf("failed to push SET-KEY command to log: %v", err)
-	}
+	ctx.PushCommand(cmd)
 
 	return &SetKeyResponse{
 		Code:     Success,
@@ -46,15 +41,12 @@ func (handler *RequestHandler) SetKey(request *SetKeyRequest) (*SetKeyResponse, 
 }
 
 func (handler *RequestHandler) GetKey(request *GetKeyRequest) (*GetKeyResponse, error) {
-	storage := handler.storage
 	ctx := handler.ctx
 	ctx.Lock()
 	defer ctx.Unlock()
 
-	value, err := storage.Get(request.Key)
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve value of key: %v", err)
-	}
+	keyValueStorage := ctx.GetKeyValueStorage()
+	value := keyValueStorage.Get(request.Key)
 
 	var code string
 	if ctx.IsLeader() {
@@ -85,10 +77,7 @@ func (handler *RequestHandler) DeleteKey(request *DeleteKeyRequest) (*DeleteKeyR
 	}
 
 	cmd := deleteKeyRequestToCommand(request)
-
-	if err := ctx.PushCommand(&cmd); err != nil {
-		return nil, fmt.Errorf("failed to push DELETE-KEY command to log: %v", err)
-	}
+	ctx.PushCommand(cmd)
 
 	return &DeleteKeyResponse{
 		Code:     Success,
@@ -135,6 +124,7 @@ func (handler *RequestHandler) GetLog(_ *GetLogRequest) (*GetLogResponse, error)
 	ctx.Lock()
 	defer ctx.Unlock()
 
+	logStorage := ctx.GetLogStorage()
 	leaderId := ctx.GetLeaderId()
 
 	if !ctx.IsLeader() {
@@ -145,10 +135,7 @@ func (handler *RequestHandler) GetLog(_ *GetLogRequest) (*GetLogResponse, error)
 		}, nil
 	}
 
-	entries, err := ctx.GetLog().GetLogEntries(0)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get log-entries: %v", err)
-	}
+	entries := logStorage.GetLogEntries(1) // Get all entries
 
 	return &GetLogResponse{
 		Code:     Success,

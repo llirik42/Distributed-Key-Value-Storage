@@ -2,10 +2,9 @@ package context
 
 import (
 	"distributed-algorithms/src/config"
-	key_value "distributed-algorithms/src/key-value"
+	"distributed-algorithms/src/key-value"
 	"distributed-algorithms/src/log"
 	"distributed-algorithms/src/raft/transport"
-	"fmt"
 	"math/rand"
 	"sync"
 	"time"
@@ -30,11 +29,11 @@ type Context struct {
 	votedFor   string
 	voteNumber uint32
 
-	log                         log.Log
-	storage                     key_value.Storage
 	followerCandidateLoopTicker *time.Ticker
 	leaderLoopTicker            *time.Ticker
 	cfg                         config.RaftConfig
+	logStorage                  log.Storage
+	keyValueStorage             key_value.Storage
 	server                      *transport.Server
 	clients                     []transport.Client
 }
@@ -53,10 +52,11 @@ func NewContext(cfg config.RaftConfig) *Context {
 		voted:                       false,
 		votedFor:                    "",
 		voteNumber:                  0,
-		log:                         nil,
 		followerCandidateLoopTicker: nil,
 		leaderLoopTicker:            nil,
 		cfg:                         config.RaftConfig{},
+		logStorage:                  nil,
+		keyValueStorage:             nil,
 		server:                      nil,
 		clients:                     nil,
 	}
@@ -79,8 +79,12 @@ func (ctx *Context) Unlock() {
 	ctx.ctxMutex.Unlock()
 }
 
-func (ctx *Context) SetLog(log log.Log) {
-	ctx.log = log
+func (ctx *Context) SetKeyValueStorage(storage key_value.Storage) {
+	ctx.keyValueStorage = storage
+}
+
+func (ctx *Context) SetLogStorage(storage log.Storage) {
+	ctx.logStorage = storage
 }
 
 func (ctx *Context) SetServer(server *transport.Server) {
@@ -113,7 +117,7 @@ func (ctx *Context) SetLeaderId(value string) {
 }
 
 func (ctx *Context) GetLeaderId() string {
-	return "123" // TODO
+	return ctx.leaderId
 }
 
 func (ctx *Context) GetLastApplied() uint64 {
@@ -128,8 +132,12 @@ func (ctx *Context) GetMatchIndexes() []uint64 {
 	return ctx.matchIndex
 }
 
-func (ctx *Context) GetLog() log.Log {
-	return ctx.log
+func (ctx *Context) GetLogStorage() log.Storage {
+	return ctx.logStorage
+}
+
+func (ctx *Context) GetKeyValueStorage() key_value.Storage {
+	return ctx.keyValueStorage
 }
 
 func (ctx *Context) PushCommand(cmd log.Command) {
@@ -138,26 +146,7 @@ func (ctx *Context) PushCommand(cmd log.Command) {
 		Command: cmd,
 	}
 
-	if err := ctx.log.PushLogEntry(&entry); err != nil {
-		return fmt.Errorf("failed to push command to log: %v", err)
-	}
-
-	return nil
-}
-
-func (ctx *Context) GetLastLogEntryMetadata() log.EntryMetadata {
-	metadata, err := ctx.log.GetLastLogEntryMetadata()
-
-	if err != nil {
-		// TODO: handle error (panic?)
-		return log.EntryMetadata{}
-	}
-
-	return metadata
-}
-
-func (ctx *Context) ApplyByCommitIndex() {
-
+	ctx.logStorage.PushLogEntry(entry)
 }
 
 func (ctx *Context) SetCommitIndex(value uint64) {
@@ -167,17 +156,6 @@ func (ctx *Context) SetCommitIndex(value uint64) {
 
 func (ctx *Context) GetCommitIndex() uint64 {
 	return ctx.commitIndex
-}
-
-func (ctx *Context) GetLogEntries(startingIndex uint64) []log.Entry {
-	entries, err := ctx.log.GetLogEntries(startingIndex)
-
-	if err != nil {
-		// TODO: handle error
-		return []log.Entry{}
-	}
-
-	return entries
 }
 
 func (ctx *Context) SetNextIndex(clientIndex int, value uint64) {
@@ -301,20 +279,17 @@ func (ctx *Context) BecomeLeader() {
 
 func (ctx *Context) applyCommitedEntries() {
 	for i := ctx.lastApplied + 1; i <= ctx.commitIndex; i++ {
-		entry := ctx.log.GetLogEntry(i)
-		log.ApplyCommand(&entry.Command, ctx.storage)
+		cmd := ctx.logStorage.GetEntryCommand(i)
+		log.ApplyCommand(cmd, ctx.keyValueStorage)
 		ctx.lastApplied++
 	}
 }
 
 func (ctx *Context) initNextAndMatchIndexes() {
-	lastLogIndex, err := ctx.log.GetLastIndex()
-	if err != nil {
-		// TODO: handle error
-	}
+	lastLogEntryIndex := ctx.logStorage.GetLastEntryMetadata().Index
 
 	for i := 0; i < len(ctx.clients); i++ {
-		ctx.nextIndex[i] = lastLogIndex + 1
+		ctx.nextIndex[i] = lastLogEntryIndex + 1
 		ctx.matchIndex[i] = 0
 	}
 }
@@ -323,7 +298,7 @@ func (ctx *Context) findNewCommitIndex() uint64 {
 	currentTerm := ctx.currentTerm
 	clusterSizeHalved := ctx.GetClusterSize() / 2
 
-	lastLogEntryIndex := ctx.log.GetLastIndex()
+	lastLogEntryIndex := ctx.logStorage.GetLastEntryMetadata().Index
 
 	newCommitIndex := ctx.commitIndex
 
@@ -339,7 +314,7 @@ func (ctx *Context) findNewCommitIndex() uint64 {
 			break
 		}
 
-		term := ctx.log.GetLogEntryTerm(i)
+		term := ctx.logStorage.GetEntryMetadata(i).Term
 		if term != currentTerm {
 			continue
 		}

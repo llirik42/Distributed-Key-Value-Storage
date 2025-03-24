@@ -32,7 +32,8 @@ func startNewTerm(ctx *context.Context) {
 }
 
 func offerCandidacy(ctx *context.Context, currentTerm uint32) {
-	lastLogEntryMetadata := ctx.GetLastLogEntryMetadata()
+	logStorage := ctx.GetLogStorage()
+	lastLogEntryMetadata := logStorage.GetLastEntryMetadata()
 
 	request := dto.RequestVoteRequest{
 		Term:         currentTerm,

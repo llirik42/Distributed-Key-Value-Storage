@@ -22,12 +22,12 @@ func (handler *MessageHandler) HandleRequestVoteRequest(
 	request *dto.RequestVoteRequest,
 ) (*dto.RequestVoteResponse, error) {
 	ctx := handler.ctx
-
-	a, _ := json.MarshalIndent(request, "", " ")
-	logging.Printf("Node \"%s\" received request of vote: %s\n", ctx.GetNodeId(), a)
-
 	ctx.Lock()
 	defer ctx.Unlock()
+
+	logStorage := ctx.GetLogStorage()
+	a, _ := json.MarshalIndent(request, "", " ")
+	logging.Printf("Node \"%s\" received request of vote: %s\n", ctx.GetNodeId(), a)
 
 	checkTerm(ctx, request.Term) // TODO: Check this in gRPC-interceptor
 
@@ -38,7 +38,7 @@ func (handler *MessageHandler) HandleRequestVoteRequest(
 	}
 
 	// Compare current node's log and candidate's log
-	currentNodeLastLogEntryMedata := ctx.GetLastLogEntryMetadata()
+	currentNodeLastLogEntryMedata := logStorage.GetLastEntryMetadata()
 	isCurrentNodeLogMoreUpToDate := log.CompareEntries(
 		currentNodeLastLogEntryMedata.Term,
 		currentNodeLastLogEntryMedata.Index,
@@ -63,12 +63,12 @@ func (handler *MessageHandler) HandleAppendEntriesRequest(
 	request *dto.AppendEntriesRequest,
 ) (*dto.AppendEntriesResponse, error) {
 	ctx := handler.ctx
-
-	a, _ := json.MarshalIndent(request, "", " ")
-	logging.Printf("Node \"%s\" received request of append-entries: %s\n", ctx.GetNodeId(), a)
-
 	ctx.Lock()
 	defer ctx.Unlock()
+
+	logStorage := ctx.GetLogStorage()
+	a, _ := json.MarshalIndent(request, "", " ")
+	logging.Printf("Node \"%s\" received request of append-entries: %s\n", ctx.GetNodeId(), a)
 
 	checkTerm(ctx, request.Term) // TODO: Check this in gRPC-interceptor
 
@@ -79,16 +79,17 @@ func (handler *MessageHandler) HandleAppendEntriesRequest(
 	}
 
 	// Compare leader's log and current node's log
-	logEntryTerm, exists := ctx.GetLogEntryTerm(request.PrevLogIndex)
+	logEntryMetadata, exists := logStorage.TryGetEntryMetadata(request.PrevLogIndex)
+	logEntryTerm := logEntryMetadata.Term
 	if !exists || logEntryTerm != request.PrevLogTerm {
 		return &dto.AppendEntriesResponse{Term: currentTerm, Success: false}, nil
 	}
 
-	// Add new entries + resolve conflict
+	// Add new entries + resolve conflicts
 	var newEntryIndex uint64
 	for i, entry := range request.Entries {
 		newEntryIndex = request.PrevLogIndex + uint64(i) + 1
-		ctx.AddLogEntry(&entry, newEntryIndex)
+		logStorage.AddLogEntry(entry, newEntryIndex)
 	}
 
 	// Update commitIndex
@@ -105,16 +106,15 @@ func (handler *MessageHandler) HandleAppendEntriesRequest(
 }
 
 func (handler *MessageHandler) HandleRequestVoteResponse(
-	_,
+	_ transport.Client,
 	response *dto.RequestVoteResponse,
 ) {
 	ctx := handler.ctx
+	ctx.Lock()
+	defer ctx.Unlock()
 
 	a, _ := json.MarshalIndent(response, "", " ")
 	logging.Printf("Node \"%s\" received response of vote: %s\n", ctx.GetNodeId(), a)
-
-	ctx.Lock()
-	defer ctx.Unlock()
 
 	checkTerm(ctx, response.Term) // TODO: Check this in gRPC-interceptor
 
@@ -128,7 +128,7 @@ func (handler *MessageHandler) HandleRequestVoteResponse(
 
 	if voteNumber > clusterSize/2 {
 		ctx.BecomeLeader()
-		utils.SendHeartbeat(ctx)
+		utils.SendAppendEntries(ctx)
 	}
 }
 
@@ -137,12 +137,11 @@ func (handler *MessageHandler) HandleAppendEntriesResponse(
 	response *dto.AppendEntriesResponse,
 ) {
 	ctx := handler.ctx
+	ctx.Lock()
+	defer ctx.Unlock()
 
 	a, _ := json.MarshalIndent(response, "", " ")
 	logging.Printf("Node \"%s\" received response of append-entries: %s\n", ctx.GetNodeId(), a)
-
-	ctx.Lock()
-	defer ctx.Unlock()
 
 	checkTerm(ctx, response.Term) // TODO: Check this in gRPC-interceptor
 

@@ -5,8 +5,8 @@ import (
 	"distributed-algorithms/src/raft/dto"
 )
 
-// SendHeartbeat TODO: rename? Maybe create SendAppendEntries and SendHeartbeat (second one for winning elections)
-func SendHeartbeat(ctx *context.Context) {
+func SendAppendEntries(ctx *context.Context) {
+	logStorage := ctx.GetLogStorage()
 	term := ctx.GetCurrentTerm()
 	leaderId := ctx.GetLeaderId()
 	leaderCommit := ctx.GetCommitIndex()
@@ -15,13 +15,8 @@ func SendHeartbeat(ctx *context.Context) {
 		clientIndex := client.GetIndex()
 		nextIndex := ctx.GetNextIndex(clientIndex)
 		prevLogIndex := nextIndex - 1
-		prevLogTerm, exists := ctx.GetLogEntryTerm(prevLogIndex)
-
-		if !exists {
-			// TODO: handle unexpected error
-		}
-
-		entries := ctx.GetLogEntries(nextIndex)
+		prevLogTerm := logStorage.GetEntryMetadata(prevLogIndex).Term
+		entries := logStorage.GetLogEntries(nextIndex)
 
 		lastSentIndex := prevLogIndex + uint64(len(entries)) - 1
 		ctx.SetLastSentIndex(clientIndex, lastSentIndex)
