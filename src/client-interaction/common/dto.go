@@ -36,7 +36,7 @@ type GetClusterInfoRequest struct{}
 type GetClusterInfoResponse struct {
 	Code     string
 	LeaderId string
-	Info     *struct {
+	Info     struct {
 		CurrentTerm uint32
 		CommitIndex uint64
 		LastApplied uint64

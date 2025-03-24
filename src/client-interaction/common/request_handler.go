@@ -96,14 +96,20 @@ func (handler *RequestHandler) GetClusterInfo(_ *GetClusterInfoRequest) (*GetClu
 		return &GetClusterInfoResponse{
 			Code:     NotLeader,
 			LeaderId: leaderId,
-			Info:     nil,
+			Info: struct {
+				CurrentTerm uint32
+				CommitIndex uint64
+				LastApplied uint64
+				NextIndex   []uint64
+				MatchIndex  []uint64
+			}{},
 		}, nil
 	}
 
 	return &GetClusterInfoResponse{
 		Code:     Success,
 		LeaderId: leaderId,
-		Info: &struct {
+		Info: struct {
 			CurrentTerm uint32
 			CommitIndex uint64
 			LastApplied uint64
