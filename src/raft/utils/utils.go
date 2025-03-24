@@ -5,6 +5,7 @@ import (
 	"distributed-algorithms/src/raft/dto"
 )
 
+// SendHeartbeat TODO: rename? Maybe create SendAppendEntries and SendHeartbeat (second one for winning elections)
 func SendHeartbeat(ctx *context.Context) {
 	term := ctx.GetCurrentTerm()
 	leaderId := ctx.GetLeaderId()

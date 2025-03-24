@@ -29,7 +29,7 @@ func (handler *RequestHandler) SetKey(c *gin.Context) {
 		Key:   key,
 		Value: restapiRequest.Value,
 	}
-	response, err := handler.commonRequestHandler.HandleSetKey(&request)
+	response, err := handler.commonRequestHandler.SetKey(&request)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
@@ -46,7 +46,7 @@ func (handler *RequestHandler) GetKey(c *gin.Context) {
 		Key: key,
 	}
 
-	response, err := handler.commonRequestHandler.HandleGetKey(&request)
+	response, err := handler.commonRequestHandler.GetKey(&request)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
@@ -63,7 +63,31 @@ func (handler *RequestHandler) DeleteKey(c *gin.Context) {
 		Key: key,
 	}
 
-	response, err := handler.commonRequestHandler.HandleDeleteKey(&request)
+	response, err := handler.commonRequestHandler.DeleteKey(&request)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+func (handler *RequestHandler) GetClusterInfo(c *gin.Context) {
+	request := common.GetClusterInfoRequest{}
+
+	response, err := handler.commonRequestHandler.GetClusterInfo(&request)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+func (handler *RequestHandler) GetLog(c *gin.Context) {
+	request := common.GetLogRequest{}
+
+	response, err := handler.commonRequestHandler.GetLog(&request)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 		return

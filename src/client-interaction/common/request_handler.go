@@ -19,7 +19,7 @@ func NewRequestHandler(context *context.Context, keyValueStorage *key_value.Stor
 	}
 }
 
-func (handler *RequestHandler) HandleSetKey(request *SetKeyRequest) (*SetKeyResponse, error) {
+func (handler *RequestHandler) SetKey(request *SetKeyRequest) (*SetKeyResponse, error) {
 	ctx := handler.ctx
 	ctx.Lock()
 	defer ctx.Unlock()
@@ -45,7 +45,7 @@ func (handler *RequestHandler) HandleSetKey(request *SetKeyRequest) (*SetKeyResp
 	}, nil
 }
 
-func (handler *RequestHandler) HandleGetKey(request *GetKeyRequest) (*GetKeyResponse, error) {
+func (handler *RequestHandler) GetKey(request *GetKeyRequest) (*GetKeyResponse, error) {
 	storage := handler.storage
 	ctx := handler.ctx
 	ctx.Lock()
@@ -70,7 +70,7 @@ func (handler *RequestHandler) HandleGetKey(request *GetKeyRequest) (*GetKeyResp
 	}, nil
 }
 
-func (handler *RequestHandler) HandleDeleteKey(request *DeleteKeyRequest) (*DeleteKeyResponse, error) {
+func (handler *RequestHandler) DeleteKey(request *DeleteKeyRequest) (*DeleteKeyResponse, error) {
 	ctx := handler.ctx
 	ctx.Lock()
 	defer ctx.Unlock()
@@ -93,6 +93,67 @@ func (handler *RequestHandler) HandleDeleteKey(request *DeleteKeyRequest) (*Dele
 	return &DeleteKeyResponse{
 		Code:     Success,
 		LeaderId: leaderId,
+	}, nil
+}
+
+func (handler *RequestHandler) GetClusterInfo(_ *GetClusterInfoRequest) (*GetClusterInfoResponse, error) {
+	ctx := handler.ctx
+	ctx.Lock()
+	defer ctx.Unlock()
+
+	leaderId := ctx.GetLeaderId()
+
+	if !ctx.IsLeader() {
+		return &GetClusterInfoResponse{
+			Code:     NotLeader,
+			LeaderId: leaderId,
+			Info:     nil,
+		}, nil
+	}
+
+	return &GetClusterInfoResponse{
+		Code:     Success,
+		LeaderId: leaderId,
+		Info: &struct {
+			CurrentTerm uint32
+			CommitIndex uint64
+			LastApplied uint64
+			NextIndex   []uint64
+			MatchIndex  []uint64
+		}{
+			CurrentTerm: ctx.GetCurrentTerm(),
+			CommitIndex: ctx.GetCommitIndex(),
+			LastApplied: ctx.GetLastApplied(),
+			NextIndex:   ctx.GetNextIndexes(),
+			MatchIndex:  ctx.GetMatchIndexes(),
+		},
+	}, nil
+}
+
+func (handler *RequestHandler) GetLog(_ *GetLogRequest) (*GetLogResponse, error) {
+	ctx := handler.ctx
+	ctx.Lock()
+	defer ctx.Unlock()
+
+	leaderId := ctx.GetLeaderId()
+
+	if !ctx.IsLeader() {
+		return &GetLogResponse{
+			Code:     NotLeader,
+			LeaderId: leaderId,
+			entries:  nil,
+		}, nil
+	}
+
+	entries, err := ctx.GetLog().GetLogEntries(0)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get log-entries: %v", err)
+	}
+
+	return &GetLogResponse{
+		Code:     Success,
+		LeaderId: leaderId,
+		entries:  entries,
 	}, nil
 }
 

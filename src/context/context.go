@@ -108,6 +108,22 @@ func (ctx *Context) GetLeaderId() string {
 	return "123" // TODO
 }
 
+func (ctx *Context) GetLastApplied() uint64 {
+	return ctx.lastApplied
+}
+
+func (ctx *Context) GetNextIndexes() []uint64 {
+	return ctx.nextIndex
+}
+
+func (ctx *Context) GetMatchIndexes() []uint64 {
+	return ctx.matchIndex
+}
+
+func (ctx *Context) GetLog() log.Log {
+	return ctx.log
+}
+
 func (ctx *Context) GetLogEntryTerm(index uint64) (uint32, bool) {
 	term, exists, err := ctx.log.GetLogEntryTerm(index)
 
@@ -190,13 +206,38 @@ func (ctx *Context) GetLastSentIndex(clientIndex int) uint64 {
 func (ctx *Context) SetMatchIndex(clientIndex int, value uint64) {
 	ctx.matchIndex[clientIndex] = value
 
-	If there exists an N such that N > commitIndex, a majority
-	of matchIndex[i] ≥ N, and log[N].term == currentTerm:
-	set commitIndex = N (§5.3, §5.4).
+	// Update commitIndex
+	currentTerm := ctx.currentTerm
+	clusterSizeHalved := ctx.GetClusterSize() / 2
+	lastLogIndex := ctx.log.GetLastIndex()
+	newCommitIndex := ctx.commitIndex
+	for i := ctx.commitIndex + 1; i <= lastLogIndex; i++ {
+		var count uint32 = 1 // By default, include current node (leader)
+		for _, v := range ctx.matchIndex {
+			if v >= i {
+				count++
+			}
+		}
+
+		if count <= clusterSizeHalved {
+			break
+		}
+
+		term := ctx.log.GetLogEntryTerm(i)
+		if term != currentTerm {
+			continue
+		}
+
+		newCommitIndex = i
+	}
+
+	if newCommitIndex != ctx.commitIndex {
+		ctx.SetCommitIndex(newCommitIndex)
+	}
 }
 
 func (ctx *Context) GetClusterSize() uint32 {
-	return uint32(1 + len(ctx.cfg.OtherNodes))
+	return 1 + uint32(len(ctx.cfg.OtherNodes))
 }
 
 func (ctx *Context) GetClients() []transport.Client {

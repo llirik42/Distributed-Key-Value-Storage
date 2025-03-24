@@ -1,13 +1,15 @@
 package log
 
 type Log interface {
-	GetLogEntryTerm(index uint64) (uint32, bool, error)
+	GetLogEntryTerm(index uint64) uint32
 
-	GetLastLogEntryMetadata() (EntryMetadata, error)
+	TryGetLogEntryTerm(index uint64) (uint32, bool)
 
-	AddLogEntry(entry *Entry, index uint64) error
+	GetLastLogEntryMetadata() EntryMetadata
 
-	GetLastIndex() (uint64, error)
+	AddLogEntry(entry *Entry, index uint64)
 
-	GetLogEntries(startingIndex uint64) ([]Entry, error)
+	GetLastIndex() uint64
+
+	GetLogEntries(startingIndex uint64) []Entry
 }

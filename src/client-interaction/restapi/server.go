@@ -14,6 +14,8 @@ func StartServer(handler *common.RequestHandler, config config.RestConfig) error
 	router.GET("/key/:key", restapiHandler.GetKey)
 	router.POST("/key/:key", restapiHandler.SetKey)
 	router.DELETE("/key/:key", restapiHandler.DeleteKey)
+	router.GET("/cluster/info", restapiHandler.GetClusterInfo)
+	router.GET("/cluster/log", restapiHandler.GetLog)
 
 	return router.Run(config.Address)
 }
