@@ -97,7 +97,7 @@ func (storage *Storage) AddLogEntry(entry log.Entry, index uint64) {
 	}
 
 	storage.entries[index-1] = entry
-	storage.length = min(storage.length, index)
+	storage.length = min(storage.length, index) // Delete all records after inserted one
 }
 
 func (storage *Storage) getEntry(index uint64) log.Entry {
