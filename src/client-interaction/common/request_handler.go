@@ -2,13 +2,11 @@ package common
 
 import (
 	"distributed-algorithms/src/context"
-	"distributed-algorithms/src/key-value"
 	"distributed-algorithms/src/log"
 )
 
 type RequestHandler struct {
-	ctx     *context.Context
-	storage key_value.Storage
+	ctx *context.Context
 }
 
 func NewRequestHandler(ctx *context.Context) *RequestHandler {
