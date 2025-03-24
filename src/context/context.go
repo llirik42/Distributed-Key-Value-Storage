@@ -34,11 +34,12 @@ type Context struct {
 	cfg                         config.RaftConfig
 	logStorage                  log.Storage
 	keyValueStorage             key_value.Storage
-	server                      *transport.Server
 	clients                     []transport.Client
 }
 
 func NewContext(cfg config.RaftConfig) *Context {
+	otherNodesCount := len(cfg.OtherNodes)
+
 	ctx := &Context{
 		ctxMutex:                    sync.Mutex{},
 		nodeId:                      cfg.SelfNode.Id,
@@ -46,26 +47,18 @@ func NewContext(cfg config.RaftConfig) *Context {
 		currentTerm:                 0,
 		commitIndex:                 0,
 		lastApplied:                 0,
-		nextIndex:                   []uint64{},
-		matchIndex:                  []uint64{},
-		lastSentIndex:               []uint64{},
+		nextIndex:                   make([]uint64, otherNodesCount),
+		matchIndex:                  make([]uint64, otherNodesCount),
+		lastSentIndex:               make([]uint64, otherNodesCount),
 		voted:                       false,
-		votedFor:                    "",
+		votedFor:                    "", // Default value doesn't matter, because voted = false
 		voteNumber:                  0,
 		followerCandidateLoopTicker: nil,
 		leaderLoopTicker:            nil,
-		cfg:                         config.RaftConfig{},
+		cfg:                         cfg,
 		logStorage:                  nil,
 		keyValueStorage:             nil,
-		server:                      nil,
 		clients:                     nil,
-	}
-
-	// Init array-fields
-	for i := 0; i < len(cfg.OtherNodes); i++ {
-		ctx.nextIndex[i] = 0
-		ctx.matchIndex[i] = 0
-		ctx.lastSentIndex[i] = 0
 	}
 
 	return ctx
@@ -79,25 +72,32 @@ func (ctx *Context) Unlock() {
 	ctx.ctxMutex.Unlock()
 }
 
-func (ctx *Context) SetKeyValueStorage(storage key_value.Storage) {
-	ctx.keyValueStorage = storage
+func (ctx *Context) GetLogStorage() log.Storage {
+	return ctx.logStorage
 }
 
 func (ctx *Context) SetLogStorage(storage log.Storage) {
 	ctx.logStorage = storage
 }
 
-func (ctx *Context) SetServer(server *transport.Server) {
-	ctx.server = server
+func (ctx *Context) GetKeyValueStorage() key_value.Storage {
+	return ctx.keyValueStorage
+}
+
+func (ctx *Context) SetKeyValueStorage(storage key_value.Storage) {
+	ctx.keyValueStorage = storage
+}
+
+func (ctx *Context) GetClients() []transport.Client {
+	return ctx.clients
 }
 
 func (ctx *Context) SetClients(clients []transport.Client) {
 	ctx.clients = clients
 }
 
-func (ctx *Context) StartTickers() {
-	ctx.followerCandidateLoopTicker = time.NewTicker(getRandomElectionTimeout(&ctx.cfg))
-	ctx.leaderLoopTicker = time.NewTicker(getBroadcastTimeout(&ctx.cfg))
+func (ctx *Context) GetNodeId() string {
+	return ctx.nodeId
 }
 
 func (ctx *Context) GetFollowerCandidateLoopTicker() *time.Ticker {
@@ -108,45 +108,16 @@ func (ctx *Context) GetLeaderLoopTicker() *time.Ticker {
 	return ctx.leaderLoopTicker
 }
 
-func (ctx *Context) ResetElectionTimeout() {
-	ctx.followerCandidateLoopTicker.Reset(getRandomElectionTimeout(&ctx.cfg))
+func (ctx *Context) GetLeaderId() string {
+	return ctx.leaderId
 }
 
 func (ctx *Context) SetLeaderId(value string) {
 	ctx.leaderId = value
 }
 
-func (ctx *Context) GetLeaderId() string {
-	return ctx.leaderId
-}
-
-func (ctx *Context) GetLastApplied() uint64 {
-	return ctx.lastApplied
-}
-
-func (ctx *Context) GetNextIndexes() []uint64 {
-	return ctx.nextIndex
-}
-
-func (ctx *Context) GetMatchIndexes() []uint64 {
-	return ctx.matchIndex
-}
-
-func (ctx *Context) GetLogStorage() log.Storage {
-	return ctx.logStorage
-}
-
-func (ctx *Context) GetKeyValueStorage() key_value.Storage {
-	return ctx.keyValueStorage
-}
-
-func (ctx *Context) PushCommand(cmd log.Command) {
-	entry := log.Entry{
-		Term:    ctx.currentTerm,
-		Command: cmd,
-	}
-
-	ctx.logStorage.PushLogEntry(entry)
+func (ctx *Context) GetCommitIndex() uint64 {
+	return ctx.commitIndex
 }
 
 func (ctx *Context) SetCommitIndex(value uint64) {
@@ -154,28 +125,36 @@ func (ctx *Context) SetCommitIndex(value uint64) {
 	ctx.applyCommitedEntries()
 }
 
-func (ctx *Context) GetCommitIndex() uint64 {
-	return ctx.commitIndex
-}
-
-func (ctx *Context) SetNextIndex(clientIndex int, value uint64) {
-	ctx.nextIndex[clientIndex] = value
+func (ctx *Context) GetLastApplied() uint64 {
+	return ctx.lastApplied
 }
 
 func (ctx *Context) GetNextIndex(clientIndex int) uint64 {
 	return ctx.nextIndex[clientIndex]
 }
 
+func (ctx *Context) GetNextIndexes() []uint64 {
+	return ctx.nextIndex
+}
+
+func (ctx *Context) SetNextIndex(clientIndex int, value uint64) {
+	ctx.nextIndex[clientIndex] = value
+}
+
 func (ctx *Context) DecrementNextIndex(clientIndex int) {
 	ctx.nextIndex[clientIndex]--
+}
+
+func (ctx *Context) GetLastSentIndex(clientIndex int) uint64 {
+	return ctx.lastSentIndex[clientIndex]
 }
 
 func (ctx *Context) SetLastSentIndex(clientIndex int, value uint64) {
 	ctx.lastSentIndex[clientIndex] = value
 }
 
-func (ctx *Context) GetLastSentIndex(clientIndex int) uint64 {
-	return ctx.lastSentIndex[clientIndex]
+func (ctx *Context) GetMatchIndexes() []uint64 {
+	return ctx.matchIndex
 }
 
 func (ctx *Context) SetMatchIndex(clientIndex int, value uint64) {
@@ -191,12 +170,22 @@ func (ctx *Context) GetClusterSize() uint32 {
 	return 1 + uint32(len(ctx.cfg.OtherNodes))
 }
 
-func (ctx *Context) GetClients() []transport.Client {
-	return ctx.clients
+func (ctx *Context) PushCommand(cmd log.Command) {
+	entry := log.Entry{
+		Term:    ctx.currentTerm,
+		Command: cmd,
+	}
+
+	ctx.logStorage.PushLogEntry(entry)
 }
 
-func (ctx *Context) GetNodeId() string {
-	return ctx.nodeId
+func (ctx *Context) StartTickers() {
+	ctx.followerCandidateLoopTicker = time.NewTicker(getRandomElectionTimeout(&ctx.cfg))
+	ctx.leaderLoopTicker = time.NewTicker(getBroadcastTimeout(&ctx.cfg))
+}
+
+func (ctx *Context) ResetElectionTimeout() {
+	ctx.followerCandidateLoopTicker.Reset(getRandomElectionTimeout(&ctx.cfg))
 }
 
 func (ctx *Context) IsFollower() bool {

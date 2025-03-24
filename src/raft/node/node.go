@@ -57,7 +57,6 @@ func StartRaftNode(
 		clients = append(clients, newClient)
 	}
 
-	ctx.SetServer(&server)
 	ctx.SetClients(clients)
 
 	ctx.StartTickers()
