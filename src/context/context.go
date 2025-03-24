@@ -234,11 +234,13 @@ func (ctx *Context) IncrementVoteNumber() uint32 {
 
 func (ctx *Context) SetCurrentTerm(value uint32) {
 	ctx.resetVoted()
+	ctx.resetLeaderId()
 	ctx.currentTerm = value
 }
 
 func (ctx *Context) IncrementCurrentTerm() uint32 {
 	ctx.resetVoted()
+	ctx.resetLeaderId()
 	ctx.currentTerm++
 	return ctx.currentTerm
 }
@@ -317,6 +319,10 @@ func (ctx *Context) findNewCommitIndex() uint64 {
 
 func (ctx *Context) resetVoted() {
 	ctx.voted = false
+}
+
+func (ctx *Context) resetLeaderId() {
+	ctx.leaderId = ""
 }
 
 func (ctx *Context) setRole(target int) {
