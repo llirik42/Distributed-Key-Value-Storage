@@ -130,19 +130,17 @@ func (handler *RequestHandler) GetLog(_ *GetLogRequest) (*GetLogResponse, error)
 
 	logStorage := ctx.GetLogStorage()
 	leaderId := ctx.GetLeaderId()
-
-	if !ctx.IsLeader() {
-		return &GetLogResponse{
-			Code:     NotLeader,
-			LeaderId: leaderId,
-			entries:  nil,
-		}, nil
-	}
-
 	entries := logStorage.GetLogEntries(1) // Get all entries
 
+	var code string
+	if ctx.IsLeader() {
+		code = Success
+	} else {
+		code = NotLeader
+	}
+
 	return &GetLogResponse{
-		Code:     Success,
+		Code:     code,
 		LeaderId: leaderId,
 		entries:  entries,
 	}, nil
