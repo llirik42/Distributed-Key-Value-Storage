@@ -130,8 +130,6 @@ paths:
   /cluster/info:
     get:
       operationId: '"GetClusterInfo"'
-      produces:
-      - application/json
       responses:
         "200":
           description: OK
@@ -143,8 +141,6 @@ paths:
   /cluster/log:
     get:
       operationId: '"GetLog"'
-      produces:
-      - application/json
       responses:
         "200":
           description: OK
@@ -163,8 +159,6 @@ paths:
         name: key
         required: true
         type: string
-      produces:
-      - application/json
       responses:
         "200":
           description: OK
@@ -181,8 +175,6 @@ paths:
         name: key
         required: true
         type: string
-      produces:
-      - application/json
       responses:
         "200":
           description: OK
@@ -192,8 +184,6 @@ paths:
       tags:
       - key
     post:
-      consumes:
-      - application/json
       description: Sets value for the given key. If the old value already exists,
         it is replaced by a new one.
       operationId: '"SetKeyValue"'
@@ -209,8 +199,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/client_interaction.SetKeyRequest'
-      produces:
-      - application/json
       responses:
         "200":
           description: OK

@@ -6,9 +6,6 @@
     "paths": {
         "/cluster/info": {
             "get": {
-                "produces": [
-                    "application/json"
-                ],
                 "tags": [
                     "cluster"
                 ],
@@ -26,9 +23,6 @@
         },
         "/cluster/log": {
             "get": {
-                "produces": [
-                    "application/json"
-                ],
                 "tags": [
                     "cluster"
                 ],
@@ -46,9 +40,6 @@
         },
         "/key/{key}": {
             "get": {
-                "produces": [
-                    "application/json"
-                ],
                 "tags": [
                     "key"
                 ],
@@ -74,12 +65,6 @@
             },
             "post": {
                 "description": "Sets value for the given key. If the old value already exists, it is replaced by a new one.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
                 "tags": [
                     "key"
                 ],
@@ -120,9 +105,6 @@
             },
             "delete": {
                 "description": "Deletes value for the given key",
-                "produces": [
-                    "application/json"
-                ],
                 "tags": [
                     "key"
                 ],

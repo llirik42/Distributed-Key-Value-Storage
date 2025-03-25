@@ -17,9 +17,6 @@ const docTemplate = `{
     "paths": {
         "/cluster/info": {
             "get": {
-                "produces": [
-                    "application/json"
-                ],
                 "tags": [
                     "cluster"
                 ],
@@ -37,9 +34,6 @@ const docTemplate = `{
         },
         "/cluster/log": {
             "get": {
-                "produces": [
-                    "application/json"
-                ],
                 "tags": [
                     "cluster"
                 ],
@@ -57,9 +51,6 @@ const docTemplate = `{
         },
         "/key/{key}": {
             "get": {
-                "produces": [
-                    "application/json"
-                ],
                 "tags": [
                     "key"
                 ],
@@ -85,12 +76,6 @@ const docTemplate = `{
             },
             "post": {
                 "description": "Sets value for the given key. If the old value already exists, it is replaced by a new one.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
                 "tags": [
                     "key"
                 ],
@@ -131,9 +116,6 @@ const docTemplate = `{
             },
             "delete": {
                 "description": "Deletes value for the given key",
-                "produces": [
-                    "application/json"
-                ],
                 "tags": [
                     "key"
                 ],

@@ -25,8 +25,6 @@ func NewRequestHandler(ctx *context.Context) *RequestHandler {
 // @Tags key
 // @Param key path string true " "
 // @Param request body SetKeyRequest	true " "
-// @Accept json
-// @Produce json
 // @Success 200 {object} SetKeyResponse
 // @Failure 400 {object} ErrorResponse
 func (handler *RequestHandler) SetKey(c *gin.Context) {
@@ -61,7 +59,6 @@ func (handler *RequestHandler) SetKey(c *gin.Context) {
 // @Summary Get Key Value
 // @Tags key
 // @Param key path string true " "
-// @Produce json
 // @Success 200 {object} GetKeyResponse
 func (handler *RequestHandler) GetKey(c *gin.Context) {
 	key := c.Param("key")
@@ -96,7 +93,6 @@ func (handler *RequestHandler) GetKey(c *gin.Context) {
 // @Description Deletes value for the given key
 // @Tags key
 // @Param key path string true " "
-// @Produce json
 // @Success 200 {object} DeleteKeyResponse
 func (handler *RequestHandler) DeleteKey(c *gin.Context) {
 	key := c.Param("key")
@@ -123,7 +119,6 @@ func (handler *RequestHandler) DeleteKey(c *gin.Context) {
 // @Router /cluster/info [get]
 // @Summary Get Cluster Info
 // @Tags cluster
-// @Produce json
 // @Success 200 {object} GetClusterInfoResponse
 func (handler *RequestHandler) GetClusterInfo(c *gin.Context) {
 	ctx := handler.ctx
@@ -157,7 +152,6 @@ func (handler *RequestHandler) GetClusterInfo(c *gin.Context) {
 // @Router /cluster/log [get]
 // @Summary Get Log
 // @Tags cluster
-// @Produce json
 // @Success 200 {object} GetLogResponse
 func (handler *RequestHandler) GetLog(c *gin.Context) {
 	ctx := handler.ctx
