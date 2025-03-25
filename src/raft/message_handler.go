@@ -98,8 +98,7 @@ func (handler *MessageHandler) HandleAppendEntriesRequest(
 		ctx.SetCommitIndex(newCommitIndex)
 	}
 
-	// Choose new randomized election timeout
-	ctx.ResetElectionTimeout()
+	ctx.BecomeFollower()
 	ctx.SetLeaderId(request.LeaderId)
 
 	return &dto.AppendEntriesResponse{Term: currentTerm, Success: true}, nil
