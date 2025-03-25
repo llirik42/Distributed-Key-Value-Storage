@@ -86,15 +86,14 @@ func (handler *MessageHandler) HandleAppendEntriesRequest(
 	}
 
 	// Add new entries + resolve conflicts
-	var newEntryIndex uint64
 	for i, entry := range request.Entries {
-		newEntryIndex = request.PrevLogIndex + uint64(i) + 1
+		newEntryIndex := request.PrevLogIndex + uint64(i) + 1
 		logStorage.AddLogEntry(entry, newEntryIndex)
 	}
 
 	// Update commitIndex
 	if request.LeaderCommit > ctx.GetCommitIndex() {
-		newCommitIndex := min(request.LeaderCommit, newEntryIndex)
+		newCommitIndex := min(request.LeaderCommit, logStorage.GetLastEntryMetadata().Index)
 		ctx.SetCommitIndex(newCommitIndex)
 	}
 
