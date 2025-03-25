@@ -1,8 +1,7 @@
 package main
 
 import (
-	"distributed-algorithms/src/client-interaction/common"
-	"distributed-algorithms/src/client-interaction/restapi"
+	"distributed-algorithms/src/client-interaction"
 	"distributed-algorithms/src/config"
 	"distributed-algorithms/src/context"
 	kv "distributed-algorithms/src/key-value/in-memory"
@@ -35,9 +34,7 @@ func main() {
 		}
 	}()
 
-	requestHandler := common.NewRequestHandler(ctx)
-
-	if err := restapi.StartServer(requestHandler, cfg.RestConfig); err != nil {
+	if err := client_interaction.StartServer(ctx, cfg.RestConfig); err != nil {
 		logging.Fatalf("error starting restapi: %v", err)
 	}
 }

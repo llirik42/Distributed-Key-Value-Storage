@@ -1,0 +1,226 @@
+definitions:
+  client_interaction.ClusterInfo:
+    properties:
+      commitIndex:
+        type: integer
+      currentTerm:
+        type: integer
+      lastApplied:
+        type: integer
+      matchIndex:
+        items:
+          type: integer
+        type: array
+      nextIndex:
+        items:
+          type: integer
+        type: array
+    required:
+    - commitIndex
+    - currentTerm
+    - lastApplied
+    - matchIndex
+    - nextIndex
+    type: object
+  client_interaction.DeleteKeyResponse:
+    properties:
+      isLeader:
+        type: boolean
+      leaderId:
+        type: string
+    required:
+    - isLeader
+    - leaderId
+    type: object
+  client_interaction.ErrorResponse:
+    properties:
+      error:
+        type: string
+    required:
+    - error
+    type: object
+  client_interaction.GetClusterInfoResponse:
+    properties:
+      info:
+        $ref: '#/definitions/client_interaction.ClusterInfo'
+      isLeader:
+        type: boolean
+      leaderId:
+        type: string
+    required:
+    - isLeader
+    - leaderId
+    type: object
+  client_interaction.GetKeyResponse:
+    properties:
+      code:
+        enum:
+        - success
+        - not_found
+        type: string
+      isLeader:
+        type: boolean
+      leaderId:
+        type: string
+      value: {}
+    required:
+    - code
+    - isLeader
+    - leaderId
+    - value
+    type: object
+  client_interaction.GetLogResponse:
+    properties:
+      entries:
+        items:
+          $ref: '#/definitions/client_interaction.LogEntry'
+        type: array
+      isLeader:
+        type: boolean
+      leaderId:
+        type: string
+    required:
+    - entries
+    - isLeader
+    - leaderId
+    type: object
+  client_interaction.LogCommand:
+    properties:
+      key:
+        type: string
+      type:
+        enum:
+        - set
+        - delete
+        type: string
+      value: {}
+    required:
+    - key
+    - type
+    type: object
+  client_interaction.LogEntry:
+    properties:
+      command:
+        $ref: '#/definitions/client_interaction.LogCommand'
+      term:
+        type: integer
+    required:
+    - command
+    - term
+    type: object
+  client_interaction.SetKeyRequest:
+    properties:
+      value: {}
+    required:
+    - value
+    type: object
+  client_interaction.SetKeyResponse:
+    properties:
+      isLeader:
+        type: boolean
+      leaderId:
+        type: string
+    required:
+    - isLeader
+    - leaderId
+    type: object
+info:
+  contact: {}
+paths:
+  /cluster/info:
+    get:
+      operationId: '"GetClusterInfo"'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/client_interaction.GetClusterInfoResponse'
+      summary: Get Cluster Info
+      tags:
+      - cluster
+  /cluster/log:
+    get:
+      operationId: '"GetLog"'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/client_interaction.GetLogResponse'
+      summary: Get Log
+      tags:
+      - cluster
+  /key/{key}:
+    delete:
+      description: Deletes value for the given key
+      operationId: '"DeleteKeyValue"'
+      parameters:
+      - description: ' '
+        in: path
+        name: key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/client_interaction.DeleteKeyResponse'
+      summary: Delete Key Value
+      tags:
+      - key
+    get:
+      operationId: '"GetKeyValue"'
+      parameters:
+      - description: ' '
+        in: path
+        name: key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/client_interaction.GetKeyResponse'
+      summary: Get Key Value
+      tags:
+      - key
+    post:
+      consumes:
+      - application/json
+      description: Sets value for the given key. If the old value already exists,
+        it is replaced by a new one.
+      operationId: '"SetKeyValue"'
+      parameters:
+      - description: ' '
+        in: path
+        name: key
+        required: true
+        type: string
+      - description: ' '
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/client_interaction.SetKeyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/client_interaction.SetKeyResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/client_interaction.ErrorResponse'
+      summary: Set Key Value
+      tags:
+      - key
+swagger: "2.0"
