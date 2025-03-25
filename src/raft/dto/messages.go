@@ -1,4 +1,8 @@
-package domain
+package dto
+
+import (
+	"distributed-algorithms/src/log"
+)
 
 type RequestVoteRequest struct {
 	Term         uint32
@@ -16,6 +20,7 @@ type AppendEntriesRequest struct {
 	LeaderId     string
 	PrevLogIndex uint64
 	PrevLogTerm  uint32
+	Entries      []log.Entry
 	LeaderCommit uint64
 }
 

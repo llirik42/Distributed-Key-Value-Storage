@@ -3,66 +3,50 @@ package grpc
 import (
 	"context"
 	pb "distributed-algorithms/generated/proto"
-	"distributed-algorithms/src/raft/domain"
+	"distributed-algorithms/src/raft/dto"
 	"distributed-algorithms/src/raft/transport"
 	"fmt"
 	"google.golang.org/grpc"
 )
 
 type Client struct {
+	index                        int
 	gRPCClient                   pb.RaftServiceClient
 	gRPCConnection               *grpc.ClientConn
 	handleRequestForVoteResponse transport.HandleRequestForVoteResponse
 	handleAppendEntriesResponse  transport.HandleAppendEntriesResponse
 }
 
-func (client *Client) SendRequestForVote(request domain.RequestVoteRequest) error {
-	pbRequest := &pb.RequestVoteRequest{
-		Term:         request.Term,
-		CandidateId:  request.CandidateId,
-		LastLogIndex: request.LastLogIndex,
-		LastLogTerm:  request.LastLogTerm,
-	}
-
+func (client *Client) SendRequestForVote(request dto.RequestVoteRequest) error {
+	pbRequest := MapRequestForVoteRequestToGRPC(&request)
 	pbResponse, err := client.gRPCClient.RequestForVote(context.Background(), pbRequest)
 
 	if err != nil {
 		return fmt.Errorf("failed to send request for vote %s: %w", pbRequest.String(), err)
 	}
 
-	response := domain.RequestVoteResponse{
-		Term:        pbResponse.Term,
-		VoteGranted: pbResponse.VoteGranted,
-	}
-
-	client.handleRequestForVoteResponse(&response)
+	response := MapRequestForVoteResponseFromGRPC(pbResponse)
+	client.handleRequestForVoteResponse(client, response)
 
 	return nil
 }
 
-func (client *Client) SendAppendEntries(request domain.AppendEntriesRequest) error {
-	pbRequest := &pb.AppendEntriesRequest{
-		Term:         request.Term,
-		LeaderId:     request.LeaderId,
-		PrevLogIndex: request.PrevLogIndex,
-		PrevLogTerm:  request.PrevLogTerm,
-		LeaderCommit: request.LeaderCommit,
-	}
-
+func (client *Client) SendAppendEntries(request dto.AppendEntriesRequest) error {
+	pbRequest := MapAppendEntriesRequestToGRPC(&request)
 	pbResponse, err := client.gRPCClient.AppendEntries(context.Background(), pbRequest)
 
 	if err != nil {
 		return fmt.Errorf("failed to send append-entries request %s: %w", pbRequest.String(), err)
 	}
 
-	response := domain.AppendEntriesResponse{
-		Term:    pbResponse.Term,
-		Success: pbResponse.Success,
-	}
-
-	client.handleAppendEntriesResponse(&response)
+	response := MapAppendEntriesResponseFromGRPC(pbResponse)
+	client.handleAppendEntriesResponse(client, response)
 
 	return nil
+}
+
+func (client *Client) GetIndex() int {
+	return client.index
 }
 
 func (client *Client) Close() error {

@@ -1,23 +1,27 @@
 package transport
 
 import (
-	"distributed-algorithms/src/raft/domain"
+	"distributed-algorithms/src/raft/dto"
 )
 
-type HandleRequestForVoteResponse func(response *domain.RequestVoteResponse)
+type HandleRequestForVoteResponse func(client Client, response *dto.RequestVoteResponse)
 
-type HandleAppendEntriesResponse func(response *domain.AppendEntriesResponse)
+type HandleAppendEntriesResponse func(client Client, response *dto.AppendEntriesResponse)
 
+// Client TODO: Split into 3 interfaces (SendRequestForVote + SendAppendEntries, Close, GetIndex?)
 type Client interface {
-	SendRequestForVote(request domain.RequestVoteRequest) error
+	SendRequestForVote(request dto.RequestVoteRequest) error
 
-	SendAppendEntries(request domain.AppendEntriesRequest) error
+	SendAppendEntries(request dto.AppendEntriesRequest) error
+
+	GetIndex() int
 
 	Close() error
 }
 
 type ClientFactory interface {
 	NewClient(
+		index int,
 		address string,
 		handleRequestForVoteResponse HandleRequestForVoteResponse,
 		handleAppendEntriesResponse HandleAppendEntriesResponse,

@@ -1,23 +1,45 @@
 package main
 
 import (
+	"distributed-algorithms/src/client-interaction"
 	"distributed-algorithms/src/config"
+	"distributed-algorithms/src/context"
+	kv "distributed-algorithms/src/key-value/in-memory"
+	log "distributed-algorithms/src/log/in-memory"
 	"distributed-algorithms/src/raft/node"
 	"distributed-algorithms/src/raft/transport/grpc"
-	"log"
+	logging "log"
 	"os"
 )
 
 func main() {
 	args := os.Args
-	filePath := args[1]
 
-	cfg, errConfig := config.NewConfiguration(filePath)
-	if errConfig != nil {
-		log.Fatal(errConfig)
+	if len(args) != 2 {
+		panic("Invalid number of arguments")
 	}
 
-	if err := node.StartRaftNode(cfg.RaftConfig, grpc.ServerFactory{}, grpc.ClientFactory{}); err != nil {
-		log.Fatal(err)
+	filePath := args[1]
+
+	cfg, err := config.NewConfiguration(filePath)
+	if err != nil {
+		logging.Fatalf("error loading configuration: %v", err)
+	}
+
+	ctx := context.NewContext(cfg.RaftConfig)
+	ctx.SetKeyValueStorage(kv.NewStorage())
+	ctx.SetLogStorage(log.NewStorage())
+
+	serverFactory := grpc.NewServerFactory()
+	clientFactory := grpc.NewClientFactory()
+
+	go func() {
+		if err := node.StartRaftNode(cfg.RaftConfig, ctx, serverFactory, clientFactory); err != nil {
+			logging.Fatalf("error starting RAFT-node: %v", err)
+		}
+	}()
+
+	if err := client_interaction.StartServer(ctx, cfg.RestConfig); err != nil {
+		logging.Fatalf("error starting restapi: %v", err)
 	}
 }

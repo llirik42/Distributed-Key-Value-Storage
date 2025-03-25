@@ -8,15 +8,15 @@ import (
 	"distributed-algorithms/src/raft/transport"
 	"encoding/json"
 	"fmt"
-	"log"
+	logging "log"
 )
 
 func StartRaftNode(
 	config config.RaftConfig,
+	ctx *context.Context,
 	raftServerFactory transport.ServerFactory,
 	raftClientFactory transport.ClientFactory,
 ) error {
-	ctx := context.NewContext(config)
 	messageHandler := raft.NewMessageHandler(ctx)
 
 	// Create and start server
@@ -30,42 +30,42 @@ func StartRaftNode(
 	}
 	defer func(server transport.Server) {
 		if err := server.Shutdown(); err != nil {
-			log.Printf("failed to shutdown RAFT-server gracefully: %s", err)
+			logging.Printf("failed to shutdown RAFT-server gracefully: %s", err)
 		}
 	}(server)
 
 	// Create connections to other nodes
 	var clients []transport.Client
-	for _, nodeAddress := range config.OtherNodes {
+	for index, nodeAddress := range config.OtherNodes {
 		newClient, errClient := raftClientFactory.NewClient(
+			index,
 			nodeAddress,
 			messageHandler.HandleRequestVoteResponse,
 			messageHandler.HandleAppendEntriesResponse,
 		)
 
 		if errClient != nil {
-			log.Fatalf("failed to creation connection to node %s: %s", nodeAddress, errClient)
+			logging.Fatalf("failed to creation connection to node %s: %s", nodeAddress, errClient)
 		}
 
 		defer func(newClient transport.Client) {
 			if err := newClient.Close(); err != nil {
-				log.Printf("failed to close node-connection gracefully: %s", err)
+				logging.Printf("failed to close node-connection gracefully: %s", err)
 			}
 		}(newClient)
 
 		clients = append(clients, newClient)
 	}
 
-	ctx.SetServer(&server)
 	ctx.SetClients(clients)
-
 	ctx.StartTickers()
 	ctx.BecomeFollower()
+
 	go loops.LeaderLoop(ctx)
 	go loops.FollowerCandidateLoop(ctx)
 
 	a, _ := json.MarshalIndent(config, "", " ")
-	log.Printf("Node is starting with configuration %s\n", a)
+	logging.Printf("node is starting with configuration %s", a)
 
 	if errListen := server.Listen(); errListen != nil {
 		return fmt.Errorf("node cannot start listen RAFT-connections: %w", errListen)

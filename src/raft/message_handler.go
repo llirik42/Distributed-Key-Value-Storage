@@ -2,10 +2,12 @@ package raft
 
 import (
 	"distributed-algorithms/src/context"
-	"distributed-algorithms/src/raft/domain"
+	"distributed-algorithms/src/log"
+	"distributed-algorithms/src/raft/dto"
+	"distributed-algorithms/src/raft/transport"
 	"distributed-algorithms/src/raft/utils"
 	"encoding/json"
-	"log"
+	logging "log"
 )
 
 type MessageHandler struct {
@@ -17,71 +19,100 @@ func NewMessageHandler(ctx *context.Context) *MessageHandler {
 }
 
 func (handler *MessageHandler) HandleRequestVoteRequest(
-	request *domain.RequestVoteRequest,
-) (*domain.RequestVoteResponse, error) {
-	// TODO: add checks about candidate's log
-
+	request *dto.RequestVoteRequest,
+) (*dto.RequestVoteResponse, error) {
 	ctx := handler.ctx
-
-	a, _ := json.MarshalIndent(request, "", " ")
-	log.Printf("Node \"%s\" received request of vote: %s\n", ctx.GetNodeId(), a)
-
 	ctx.Lock()
 	defer ctx.Unlock()
 
-	checkTerm(ctx, request.Term)
-	currentTerm := ctx.GetCurrentTerm()
-	var voteGranted bool
+	logStorage := ctx.GetLogStorage()
+	a, _ := json.MarshalIndent(request, "", " ")
+	logging.Printf("Node \"%s\" received request of vote: %s\n", ctx.GetNodeId(), a)
 
+	checkTerm(ctx, request.Term) // TODO: Check this in gRPC-interceptor
+
+	// Compare request's term and current term
+	currentTerm := ctx.GetCurrentTerm()
 	if request.Term < currentTerm {
-		voteGranted = false
-	} else {
-		voteGranted = ctx.Vote(request.CandidateId)
+		return &dto.RequestVoteResponse{Term: currentTerm, VoteGranted: false}, nil
 	}
+
+	// Compare current node's log and candidate's log
+	currentNodeLastLogEntryMedata := logStorage.GetLastEntryMetadata()
+	isCurrentNodeLogMoreUpToDate := log.CompareEntries(
+		currentNodeLastLogEntryMedata.Term,
+		currentNodeLastLogEntryMedata.Index,
+		request.LastLogTerm,
+		request.LastLogIndex,
+	) < 0
+	if isCurrentNodeLogMoreUpToDate {
+		return &dto.RequestVoteResponse{Term: currentTerm, VoteGranted: false}, nil
+	}
+
+	// Try to vote for the candidate
+	voteGranted := ctx.Vote(request.CandidateId)
 
 	if voteGranted {
-		ctx.ResetNewElectionTimeout()
+		ctx.ResetElectionTimeout()
 	}
 
-	return &domain.RequestVoteResponse{Term: currentTerm, VoteGranted: voteGranted}, nil
+	return &dto.RequestVoteResponse{Term: currentTerm, VoteGranted: voteGranted}, nil
 }
 
 func (handler *MessageHandler) HandleAppendEntriesRequest(
-	request *domain.AppendEntriesRequest,
-) (*domain.AppendEntriesResponse, error) {
-	// TODO: add checks related to log entries
-
+	request *dto.AppendEntriesRequest,
+) (*dto.AppendEntriesResponse, error) {
 	ctx := handler.ctx
-
-	a, _ := json.MarshalIndent(request, "", " ")
-	log.Printf("Node \"%s\" received request of append-entries: %s\n", ctx.GetNodeId(), a)
-
 	ctx.Lock()
 	defer ctx.Unlock()
 
-	currentTerm := ctx.GetCurrentTerm()
-	requestTerm := request.Term
-	success := requestTerm >= currentTerm
+	logStorage := ctx.GetLogStorage()
+	a, _ := json.MarshalIndent(request, "", " ")
+	logging.Printf("Node \"%s\" received request of append-entries: %s\n", ctx.GetNodeId(), a)
 
-	if success {
-		// Stable phase started
-		ctx.BecomeFollower()
-		ctx.SetCurrentTerm(requestTerm)
+	checkTerm(ctx, request.Term) // TODO: Check this in gRPC-interceptor
+
+	// Compare request's term and current term
+	currentTerm := ctx.GetCurrentTerm()
+	if request.Term < currentTerm {
+		return &dto.AppendEntriesResponse{Term: currentTerm, Success: false}, nil
 	}
 
-	return &domain.AppendEntriesResponse{Term: currentTerm, Success: success}, nil
+	// Compare leader's log and current node's log
+	logEntryMetadata, exists := logStorage.TryGetEntryMetadata(request.PrevLogIndex)
+	logEntryTerm := logEntryMetadata.Term
+	if !exists || logEntryTerm != request.PrevLogTerm {
+		return &dto.AppendEntriesResponse{Term: currentTerm, Success: false}, nil
+	}
+
+	// Add new entries + resolve conflicts
+	for i, entry := range request.Entries {
+		newEntryIndex := request.PrevLogIndex + uint64(i) + 1
+		logStorage.AddLogEntry(entry, newEntryIndex)
+	}
+
+	// Update commitIndex
+	if request.LeaderCommit > ctx.GetCommitIndex() {
+		newCommitIndex := min(request.LeaderCommit, logStorage.GetLastEntryMetadata().Index)
+		ctx.SetCommitIndex(newCommitIndex)
+	}
+
+	ctx.BecomeFollower()
+	ctx.SetLeaderId(request.LeaderId)
+
+	return &dto.AppendEntriesResponse{Term: currentTerm, Success: true}, nil
 }
 
 func (handler *MessageHandler) HandleRequestVoteResponse(
-	response *domain.RequestVoteResponse,
+	_ transport.Client,
+	response *dto.RequestVoteResponse,
 ) {
 	ctx := handler.ctx
-
-	a, _ := json.MarshalIndent(response, "", " ")
-	log.Printf("Node \"%s\" received response of vote: %s\n", ctx.GetNodeId(), a)
-
 	ctx.Lock()
 	defer ctx.Unlock()
+
+	a, _ := json.MarshalIndent(response, "", " ")
+	logging.Printf("Node \"%s\" received response of vote: %s\n", ctx.GetNodeId(), a)
 
 	checkTerm(ctx, response.Term) // TODO: Check this in gRPC-interceptor
 
@@ -95,24 +126,32 @@ func (handler *MessageHandler) HandleRequestVoteResponse(
 	
 	if voteNumber > clusterSize/2 {
 		ctx.BecomeLeader()
-		utils.SendHeartbeat(ctx)
+		utils.SendAppendEntries(ctx)
 	}
 }
 
 func (handler *MessageHandler) HandleAppendEntriesResponse(
-	response *domain.AppendEntriesResponse,
+	client transport.Client,
+	response *dto.AppendEntriesResponse,
 ) {
-	// TODO: add checks related to logs
-
 	ctx := handler.ctx
-
-	a, _ := json.MarshalIndent(response, "", " ")
-	log.Printf("Node \"%s\" received response of append-entries: %s\n", ctx.GetNodeId(), a)
-
 	ctx.Lock()
 	defer ctx.Unlock()
 
+	a, _ := json.MarshalIndent(response, "", " ")
+	logging.Printf("Node \"%s\" received response of append-entries: %s\n", ctx.GetNodeId(), a)
+
 	checkTerm(ctx, response.Term) // TODO: Check this in gRPC-interceptor
+
+	clientIndex := client.GetIndex() // Index of responder's connection
+
+	if response.Success {
+		lastSentIndex := ctx.GetLastSentIndex(clientIndex)
+		ctx.SetNextIndex(clientIndex, lastSentIndex+1)
+		ctx.SetMatchIndex(clientIndex, lastSentIndex)
+	} else {
+		ctx.DecrementNextIndex(clientIndex)
+	}
 }
 
 func checkTerm(ctx *context.Context, term uint32) {

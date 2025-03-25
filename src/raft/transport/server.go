@@ -1,12 +1,12 @@
 package transport
 
 import (
-	"distributed-algorithms/src/raft/domain"
+	"distributed-algorithms/src/raft/dto"
 )
 
-type HandleRequestForVoteRequest func(request *domain.RequestVoteRequest) (*domain.RequestVoteResponse, error)
+type HandleRequestForVoteRequest func(request *dto.RequestVoteRequest) (*dto.RequestVoteResponse, error)
 
-type HandleAppendEntriesRequest func(request *domain.AppendEntriesRequest) (*domain.AppendEntriesResponse, error)
+type HandleAppendEntriesRequest func(request *dto.AppendEntriesRequest) (*dto.AppendEntriesResponse, error)
 
 type Server interface {
 	Listen() error

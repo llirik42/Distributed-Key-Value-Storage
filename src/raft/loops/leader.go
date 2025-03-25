@@ -16,5 +16,5 @@ func LeaderLoop(ctx *context.Context) {
 func iterateLeaderLoop(ctx *context.Context) {
 	ctx.Lock()
 	defer ctx.Unlock()
-	utils.SendHeartbeat(ctx)
+	utils.SendAppendEntries(ctx)
 }

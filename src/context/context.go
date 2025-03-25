@@ -2,7 +2,8 @@ package context
 
 import (
 	"distributed-algorithms/src/config"
-	"distributed-algorithms/src/raft/domain"
+	"distributed-algorithms/src/key-value"
+	"distributed-algorithms/src/log"
 	"distributed-algorithms/src/raft/transport"
 	"math/rand"
 	"sync"
@@ -12,34 +13,52 @@ import (
 type Context struct {
 	ctxMutex sync.Mutex
 
-	cfg         config.RaftConfig
-	currentTerm uint32
-	voted       bool
-	votedFor    string
-	voteNumber  uint32
-
 	nodeId   string
 	nodeRole int
+	leaderId string
+
+	currentTerm uint32
+
+	commitIndex   uint64
+	lastApplied   uint64
+	nextIndex     []uint64
+	matchIndex    []uint64
+	lastSentIndex []uint64
+
+	voted      bool
+	votedFor   string
+	voteNumber uint32
 
 	followerCandidateLoopTicker *time.Ticker
 	leaderLoopTicker            *time.Ticker
-
-	server  *transport.Server
-	clients []transport.Client
+	cfg                         config.RaftConfig
+	logStorage                  log.Storage
+	keyValueStorage             key_value.Storage
+	clients                     []transport.Client
 }
 
 func NewContext(cfg config.RaftConfig) *Context {
+	otherNodesCount := len(cfg.OtherNodes)
+
 	ctx := &Context{
-		cfg:                         cfg,
+		ctxMutex: sync.Mutex{},
+		nodeId:   cfg.SelfNode.Id,
+		nodeRole: 0, // Default value doesn't matter,
+		// because BecomeFollower should be called before using context
 		currentTerm:                 0,
+		commitIndex:                 0,
+		lastApplied:                 0,
+		nextIndex:                   make([]uint64, otherNodesCount),
+		matchIndex:                  make([]uint64, otherNodesCount),
+		lastSentIndex:               make([]uint64, otherNodesCount),
 		voted:                       false,
-		votedFor:                    "", // Default value doesn't matter because voted = false by default
+		votedFor:                    "", // Default value doesn't matter, because voted = false
 		voteNumber:                  0,
-		nodeId:                      cfg.SelfNode.Id,
-		nodeRole:                    domain.FOLLOWER,
 		followerCandidateLoopTicker: nil,
 		leaderLoopTicker:            nil,
-		server:                      nil,
+		cfg:                         cfg,
+		logStorage:                  nil,
+		keyValueStorage:             nil,
 		clients:                     nil,
 	}
 
@@ -54,17 +73,32 @@ func (ctx *Context) Unlock() {
 	ctx.ctxMutex.Unlock()
 }
 
-func (ctx *Context) SetServer(server *transport.Server) {
-	ctx.server = server
+func (ctx *Context) GetLogStorage() log.Storage {
+	return ctx.logStorage
+}
+
+func (ctx *Context) SetLogStorage(storage log.Storage) {
+	ctx.logStorage = storage
+}
+
+func (ctx *Context) GetKeyValueStorage() key_value.Storage {
+	return ctx.keyValueStorage
+}
+
+func (ctx *Context) SetKeyValueStorage(storage key_value.Storage) {
+	ctx.keyValueStorage = storage
+}
+
+func (ctx *Context) GetClients() []transport.Client {
+	return ctx.clients
 }
 
 func (ctx *Context) SetClients(clients []transport.Client) {
 	ctx.clients = clients
 }
 
-func (ctx *Context) StartTickers() {
-	ctx.followerCandidateLoopTicker = time.NewTicker(getRandomElectionTimeout(&ctx.cfg))
-	ctx.leaderLoopTicker = time.NewTicker(getBroadcastTimeout(&ctx.cfg))
+func (ctx *Context) GetNodeId() string {
+	return ctx.nodeId
 }
 
 func (ctx *Context) GetFollowerCandidateLoopTicker() *time.Ticker {
@@ -75,40 +109,96 @@ func (ctx *Context) GetLeaderLoopTicker() *time.Ticker {
 	return ctx.leaderLoopTicker
 }
 
-func (ctx *Context) ResetNewElectionTimeout() {
-	ctx.followerCandidateLoopTicker.Reset(getRandomElectionTimeout(&ctx.cfg))
+func (ctx *Context) GetLeaderId() string {
+	return ctx.leaderId
+}
+
+func (ctx *Context) SetLeaderId(value string) {
+	ctx.leaderId = value
+}
+
+func (ctx *Context) GetCommitIndex() uint64 {
+	return ctx.commitIndex
+}
+
+func (ctx *Context) SetCommitIndex(value uint64) {
+	ctx.commitIndex = value
+	ctx.applyCommitedEntries()
+}
+
+func (ctx *Context) GetLastApplied() uint64 {
+	return ctx.lastApplied
+}
+
+func (ctx *Context) GetNextIndex(clientIndex int) uint64 {
+	return ctx.nextIndex[clientIndex]
+}
+
+func (ctx *Context) GetNextIndexes() []uint64 {
+	return ctx.nextIndex
+}
+
+func (ctx *Context) SetNextIndex(clientIndex int, value uint64) {
+	ctx.nextIndex[clientIndex] = value
+}
+
+func (ctx *Context) DecrementNextIndex(clientIndex int) {
+	ctx.nextIndex[clientIndex]--
+}
+
+func (ctx *Context) GetLastSentIndex(clientIndex int) uint64 {
+	return ctx.lastSentIndex[clientIndex]
+}
+
+func (ctx *Context) SetLastSentIndex(clientIndex int, value uint64) {
+	ctx.lastSentIndex[clientIndex] = value
+}
+
+func (ctx *Context) GetMatchIndexes() []uint64 {
+	return ctx.matchIndex
+}
+
+func (ctx *Context) SetMatchIndex(clientIndex int, value uint64) {
+	ctx.matchIndex[clientIndex] = value
+
+	newCommitIndex := ctx.findNewCommitIndex()
+	if newCommitIndex != ctx.commitIndex {
+		ctx.SetCommitIndex(newCommitIndex)
+	}
 }
 
 func (ctx *Context) GetClusterSize() uint32 {
-	return uint32(1 + len(ctx.cfg.OtherNodes))
+	return 1 + uint32(len(ctx.cfg.OtherNodes))
 }
 
-func (ctx *Context) GetClients() []transport.Client {
-	return ctx.clients
+func (ctx *Context) PushCommand(cmd log.Command) {
+	entry := log.Entry{
+		Term:    ctx.currentTerm,
+		Command: cmd,
+	}
+
+	ctx.logStorage.PushLogEntry(entry)
 }
 
-func (ctx *Context) GetNodeId() string {
-	return ctx.nodeId
+func (ctx *Context) StartTickers() {
+	ctx.followerCandidateLoopTicker = time.NewTicker(getRandomElectionTimeout(&ctx.cfg))
+	ctx.leaderLoopTicker = time.NewTicker(getBroadcastTimeout(&ctx.cfg))
+}
+
+func (ctx *Context) ResetElectionTimeout() {
+	ctx.followerCandidateLoopTicker.Reset(getRandomElectionTimeout(&ctx.cfg))
 }
 
 func (ctx *Context) IsFollower() bool {
-	return ctx.hasRole(domain.FOLLOWER)
+	return ctx.hasRole(Follower)
 }
 
 func (ctx *Context) IsCandidate() bool {
-	return ctx.hasRole(domain.CANDIDATE)
+	return ctx.hasRole(Candidate)
 }
 
 func (ctx *Context) IsLeader() bool {
-	return ctx.hasRole(domain.LEADER)
-}
-
-func (ctx *Context) setRole(target int) {
-	ctx.nodeRole = target
-}
-
-func (ctx *Context) hasRole(target int) bool {
-	return ctx.nodeRole == target
+	return ctx.hasRole(Leader)
 }
 
 func (ctx *Context) Vote(candidateId string) bool {
@@ -144,11 +234,13 @@ func (ctx *Context) IncrementVoteNumber() uint32 {
 
 func (ctx *Context) SetCurrentTerm(value uint32) {
 	ctx.resetVoted()
+	ctx.resetLeaderId()
 	ctx.currentTerm = value
 }
 
 func (ctx *Context) IncrementCurrentTerm() uint32 {
 	ctx.resetVoted()
+	ctx.resetLeaderId()
 	ctx.currentTerm++
 	return ctx.currentTerm
 }
@@ -158,25 +250,87 @@ func (ctx *Context) GetCurrentTerm() uint32 {
 }
 
 func (ctx *Context) BecomeFollower() {
-	ctx.setRole(domain.FOLLOWER)
+	ctx.setRole(Follower)
 	ctx.leaderLoopTicker.Stop()
-	ctx.ResetNewElectionTimeout()
+	ctx.ResetElectionTimeout()
 }
 
 func (ctx *Context) BecomeCandidate() {
-	ctx.setRole(domain.CANDIDATE)
-	ctx.leaderLoopTicker.Stop()
-	ctx.ResetNewElectionTimeout()
+	ctx.setRole(Candidate)
+	// Node can become Candidate only from Follower.
+	// So at this point we don't have to deal with tickers, because Follower's tickers = Candidate's tickers
 }
 
 func (ctx *Context) BecomeLeader() {
-	ctx.setRole(domain.LEADER)
+	ctx.setRole(Leader)
+	ctx.leaderId = ctx.nodeId
 	ctx.followerCandidateLoopTicker.Stop()
 	ctx.leaderLoopTicker.Reset(getBroadcastTimeout(&ctx.cfg))
+	ctx.initNextAndMatchIndexes()
+}
+
+func (ctx *Context) applyCommitedEntries() {
+	for i := ctx.lastApplied + 1; i <= ctx.commitIndex; i++ {
+		cmd := ctx.logStorage.GetEntryCommand(i)
+		log.ApplyCommand(cmd, ctx.keyValueStorage)
+		ctx.lastApplied++
+	}
+}
+
+func (ctx *Context) initNextAndMatchIndexes() {
+	lastLogEntryIndex := ctx.logStorage.GetLastEntryMetadata().Index
+
+	for i := 0; i < len(ctx.clients); i++ {
+		ctx.nextIndex[i] = lastLogEntryIndex + 1
+		ctx.matchIndex[i] = 0
+	}
+}
+
+func (ctx *Context) findNewCommitIndex() uint64 {
+	currentTerm := ctx.currentTerm
+	clusterSizeHalved := ctx.GetClusterSize() / 2
+
+	lastLogEntryIndex := ctx.logStorage.GetLastEntryMetadata().Index
+
+	newCommitIndex := ctx.commitIndex
+
+	for i := ctx.commitIndex + 1; i <= lastLogEntryIndex; i++ {
+		var count uint32 = 1 // By default, include current node (leader)
+		for _, v := range ctx.matchIndex {
+			if v >= i {
+				count++
+			}
+		}
+
+		if count <= clusterSizeHalved {
+			break
+		}
+
+		term := ctx.logStorage.GetEntryMetadata(i).Term
+		if term != currentTerm {
+			continue
+		}
+
+		newCommitIndex = i
+	}
+
+	return newCommitIndex
 }
 
 func (ctx *Context) resetVoted() {
 	ctx.voted = false
+}
+
+func (ctx *Context) resetLeaderId() {
+	ctx.leaderId = ""
+}
+
+func (ctx *Context) setRole(target int) {
+	ctx.nodeRole = target
+}
+
+func (ctx *Context) hasRole(target int) bool {
+	return ctx.nodeRole == target
 }
 
 func getBroadcastTimeout(cfg *config.RaftConfig) time.Duration {

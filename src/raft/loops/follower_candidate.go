@@ -2,7 +2,7 @@ package loops
 
 import (
 	"distributed-algorithms/src/context"
-	"distributed-algorithms/src/raft/domain"
+	"distributed-algorithms/src/raft/dto"
 )
 
 func FollowerCandidateLoop(ctx *context.Context) {
@@ -32,11 +32,14 @@ func startNewTerm(ctx *context.Context) {
 }
 
 func offerCandidacy(ctx *context.Context, currentTerm uint32) {
-	request := domain.RequestVoteRequest{
+	logStorage := ctx.GetLogStorage()
+	lastLogEntryMetadata := logStorage.GetLastEntryMetadata()
+
+	request := dto.RequestVoteRequest{
 		Term:         currentTerm,
 		CandidateId:  ctx.GetNodeId(),
-		LastLogIndex: 0,
-		LastLogTerm:  0,
+		LastLogIndex: lastLogEntryMetadata.Index,
+		LastLogTerm:  lastLogEntryMetadata.Term,
 	}
 
 	for _, client := range ctx.GetClients() {

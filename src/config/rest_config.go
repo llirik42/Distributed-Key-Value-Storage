@@ -1,5 +1,5 @@
 package config
 
-type RESTConfig struct {
+type RestConfig struct {
 	Address string `env:"REST_ADDRESS,required"`
 }
