@@ -14,6 +14,11 @@ import (
 
 func main() {
 	args := os.Args
+
+	if len(args) != 2 {
+		panic("Invalid number of arguments")
+	}
+
 	filePath := args[1]
 
 	cfg, err := config.NewConfiguration(filePath)
