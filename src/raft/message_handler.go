@@ -140,7 +140,7 @@ func (handler *MessageHandler) HandleAppendEntriesResponse(
 	ctx := handler.ctx
 	ctx.Lock()
 	defer ctx.Unlock()
-	
+
 	checkTerm(ctx, response.Term) // TODO: Check this in gRPC-interceptor
 
 	clientIndex := client.GetIndex() // Index of responder's connection
