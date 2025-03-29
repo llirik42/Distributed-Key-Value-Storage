@@ -26,6 +26,7 @@ type LogCommand struct {
 }
 
 type CommandExecutionInfo struct {
+	Found   bool   `validate:"required" json:"found"`
 	Value   any    `validate:"required" json:"value"`
 	Message string `validate:"required" json:"message"`
 	Success bool   `validate:"required" json:"success"`
@@ -68,6 +69,7 @@ type GetLogResponse struct {
 }
 
 type GetCommandExecutionInfoResponse struct {
-	Found bool                 `validate:"required" json:"found"`
-	Info  CommandExecutionInfo `validate:"required" json:"info"`
+	IsLeader bool                 `validate:"required" json:"isLeader"`
+	LeaderId string               `validate:"required" json:"leaderId"`
+	Info     CommandExecutionInfo `validate:"required" json:"info"`
 }

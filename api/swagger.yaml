@@ -24,12 +24,15 @@ definitions:
     type: object
   client_interaction.CommandExecutionInfo:
     properties:
+      found:
+        type: boolean
       message:
         type: string
       success:
         type: boolean
       value: {}
     required:
+    - found
     - message
     - success
     - value
@@ -74,13 +77,16 @@ definitions:
     type: object
   client_interaction.GetCommandExecutionInfoResponse:
     properties:
-      found:
-        type: boolean
       info:
         $ref: '#/definitions/client_interaction.CommandExecutionInfo'
+      isLeader:
+        type: boolean
+      leaderId:
+        type: string
     required:
-    - found
     - info
+    - isLeader
+    - leaderId
     type: object
   client_interaction.GetLogResponse:
     properties:

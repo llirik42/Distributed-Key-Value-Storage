@@ -234,11 +234,15 @@ const docTemplate = `{
         "client_interaction.CommandExecutionInfo": {
             "type": "object",
             "required": [
+                "found",
                 "message",
                 "success",
                 "value"
             ],
             "properties": {
+                "found": {
+                    "type": "boolean"
+                },
                 "message": {
                     "type": "string"
                 },
@@ -307,15 +311,19 @@ const docTemplate = `{
         "client_interaction.GetCommandExecutionInfoResponse": {
             "type": "object",
             "required": [
-                "found",
-                "info"
+                "info",
+                "isLeader",
+                "leaderId"
             ],
             "properties": {
-                "found": {
-                    "type": "boolean"
-                },
                 "info": {
                     "$ref": "#/definitions/client_interaction.CommandExecutionInfo"
+                },
+                "isLeader": {
+                    "type": "boolean"
+                },
+                "leaderId": {
+                    "type": "string"
                 }
             }
         },

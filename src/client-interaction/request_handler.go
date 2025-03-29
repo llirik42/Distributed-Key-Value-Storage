@@ -228,8 +228,10 @@ func (handler *RequestHandler) GetCommandExecutionInfo(c *gin.Context) {
 	)
 
 	response := GetCommandExecutionInfoResponse{
-		Found: exists,
+		IsLeader: ctx.IsLeader(),
+		LeaderId: ctx.GetLeaderId(),
 		Info: CommandExecutionInfo{
+			Found:   exists,
 			Value:   info.Value,
 			Message: info.Message,
 			Success: info.Success,
