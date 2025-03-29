@@ -14,8 +14,9 @@ func StartServer(ctx *context.Context, cfg config.RestConfig) error {
 
 	restapiHandler := NewRequestHandler(ctx)
 
-	router.GET("/key/:key", restapiHandler.GetKey)
-	router.POST("/key/:key", restapiHandler.SetKey)
+	router.GET("/key/:key", restapiHandler.GetKeyValue)
+	router.POST("/key/:key", restapiHandler.SetKeyValue)
+	router.PATCH("/key/:key", restapiHandler.CompareAndSetKeyValue)
 	router.DELETE("/key/:key", restapiHandler.DeleteKey)
 	router.GET("/cluster/info", restapiHandler.GetClusterInfo)
 	router.GET("/cluster/log", restapiHandler.GetLog)

@@ -18,23 +18,23 @@ func NewRequestHandler(ctx *context.Context) *RequestHandler {
 	}
 }
 
-// SetKey
+// SetKeyValue
 // @Id "SetKeyValue"
 // @Router /key/{key} [post]
 // @Summary Set Key Value
 // @Description Sets value for the given key. If the old value already exists, it is replaced by a new one.
 // @Tags key
 // @Param key path string true " "
-// @Param request body SetKeyRequest	true " "
-// @Success 200 {object} SetKeyResponse
+// @Param request body SetKeyValueRequest	true " "
+// @Success 200 {object} CommandResponse
 // @Failure 400 {object} ErrorResponse
-func (handler *RequestHandler) SetKey(c *gin.Context) {
+func (handler *RequestHandler) SetKeyValue(c *gin.Context) {
 	key := c.Param("key")
 	ctx := handler.ctx
 	ctx.Lock()
 	defer ctx.Unlock()
 
-	request := SetKeyRequest{}
+	request := SetKeyValueRequest{}
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 		return
@@ -47,7 +47,7 @@ func (handler *RequestHandler) SetKey(c *gin.Context) {
 		requestId = ctx.PushCommand(cmd)
 	}
 
-	response := SetKeyResponse{
+	response := CommandResponse{
 		IsLeader:  isLeader,
 		LeaderId:  ctx.GetLeaderId(),
 		RequestId: requestId,
@@ -56,14 +56,51 @@ func (handler *RequestHandler) SetKey(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// GetKey
+// CompareAndSetKeyValue
+// @Id "CompareAndSetKeyValue"
+// @Router /key/{key} [patch]
+// @Summary Compare And Set Key Value
+// @Tags key
+// @Param key path string true " "
+// @Param request body CompareAndSetKeyValueRequest true " "
+// @Success 200 {object} CommandResponse
+// @Failure 400 {object} ErrorResponse
+func (handler *RequestHandler) CompareAndSetKeyValue(c *gin.Context) {
+	key := c.Param("key")
+	ctx := handler.ctx
+	ctx.Lock()
+	defer ctx.Unlock()
+
+	request := CompareAndSetKeyValueRequest{}
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	var requestId = ""
+	isLeader := ctx.IsLeader()
+	if isLeader {
+		cmd := createCASCommand(key, &request)
+		requestId = ctx.PushCommand(cmd)
+	}
+
+	response := CommandResponse{
+		IsLeader:  isLeader,
+		LeaderId:  ctx.GetLeaderId(),
+		RequestId: requestId,
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// GetKeyValue
 // @Id "GetKeyValue"
 // @Router /key/{key} [get]
 // @Summary Get Key Value
 // @Tags key
 // @Param key path string true " "
 // @Success 200 {object} GetKeyResponse
-func (handler *RequestHandler) GetKey(c *gin.Context) {
+func (handler *RequestHandler) GetKeyValue(c *gin.Context) {
 	key := c.Param("key")
 	ctx := handler.ctx
 	ctx.Lock()
@@ -96,7 +133,7 @@ func (handler *RequestHandler) GetKey(c *gin.Context) {
 // @Description Deletes value for the given key
 // @Tags key
 // @Param key path string true " "
-// @Success 200 {object} DeleteKeyResponse
+// @Success 200 {object} CommandResponse
 func (handler *RequestHandler) DeleteKey(c *gin.Context) {
 	key := c.Param("key")
 	ctx := handler.ctx
@@ -110,7 +147,7 @@ func (handler *RequestHandler) DeleteKey(c *gin.Context) {
 		requestId = ctx.PushCommand(cmd)
 	}
 
-	response := DeleteKeyResponse{
+	response := CommandResponse{
 		IsLeader:  isLeader,
 		LeaderId:  ctx.GetLeaderId(),
 		RequestId: requestId,
@@ -175,11 +212,20 @@ func (handler *RequestHandler) GetLog(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-func createSetKeyCommand(key string, request *SetKeyRequest) log.Command {
+func createSetKeyCommand(key string, request *SetKeyValueRequest) log.Command {
 	return log.Command{
 		Key:      key,
 		NewValue: request.Value,
 		Type:     log.Set,
+	}
+}
+
+func createCASCommand(key string, request *CompareAndSetKeyValueRequest) log.Command {
+	return log.Command{
+		Key:      key,
+		OldValue: request.OldValue,
+		NewValue: request.NewValue,
+		Type:     log.CompareAndSet,
 	}
 }
 

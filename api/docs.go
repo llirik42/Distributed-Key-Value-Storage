@@ -95,7 +95,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/client_interaction.SetKeyRequest"
+                            "$ref": "#/definitions/client_interaction.SetKeyValueRequest"
                         }
                     }
                 ],
@@ -103,7 +103,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/client_interaction.SetKeyResponse"
+                            "$ref": "#/definitions/client_interaction.CommandResponse"
                         }
                     },
                     "400": {
@@ -134,7 +134,46 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/client_interaction.DeleteKeyResponse"
+                            "$ref": "#/definitions/client_interaction.CommandResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "key"
+                ],
+                "summary": "Compare And Set Key Value",
+                "operationId": "\"CompareAndSetKeyValue\"",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": " ",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": " ",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/client_interaction.CompareAndSetKeyValueRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/client_interaction.CommandResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/client_interaction.ErrorResponse"
                         }
                     }
                 }
@@ -175,7 +214,7 @@ const docTemplate = `{
                 }
             }
         },
-        "client_interaction.DeleteKeyResponse": {
+        "client_interaction.CommandResponse": {
             "type": "object",
             "required": [
                 "isLeader",
@@ -193,6 +232,13 @@ const docTemplate = `{
                     "type": "string",
                     "format": "uuid"
                 }
+            }
+        },
+        "client_interaction.CompareAndSetKeyValueRequest": {
+            "type": "object",
+            "properties": {
+                "newValue": {},
+                "oldValue": {}
             }
         },
         "client_interaction.ErrorResponse": {
@@ -318,33 +364,10 @@ const docTemplate = `{
                 }
             }
         },
-        "client_interaction.SetKeyRequest": {
+        "client_interaction.SetKeyValueRequest": {
             "type": "object",
-            "required": [
-                "value"
-            ],
             "properties": {
                 "value": {}
-            }
-        },
-        "client_interaction.SetKeyResponse": {
-            "type": "object",
-            "required": [
-                "isLeader",
-                "leaderId",
-                "requestId"
-            ],
-            "properties": {
-                "isLeader": {
-                    "type": "boolean"
-                },
-                "leaderId": {
-                    "type": "string"
-                },
-                "requestId": {
-                    "type": "string",
-                    "format": "uuid"
-                }
             }
         }
     }

@@ -33,11 +33,16 @@ type ErrorResponse struct {
 	Error string `validate:"required" json:"error"`
 }
 
-type SetKeyRequest struct {
-	Value any `validate:"required" json:"value"`
+type SetKeyValueRequest struct {
+	Value any `json:"value"`
 }
 
-type SetKeyResponse struct {
+type CompareAndSetKeyValueRequest struct {
+	OldValue any `json:"oldValue"`
+	NewValue any `json:"newValue"`
+}
+
+type CommandResponse struct {
 	IsLeader  bool   `validate:"required" json:"isLeader"`
 	LeaderId  string `validate:"required" json:"leaderId"`
 	RequestId string `validate:"required" json:"requestId" format:"uuid"`
@@ -48,12 +53,6 @@ type GetKeyResponse struct {
 	Value    any    `validate:"required" json:"value"`
 	Code     string `enums:"success,not_found" validate:"required" json:"code"`
 	LeaderId string `validate:"required" json:"leaderId"`
-}
-
-type DeleteKeyResponse struct {
-	IsLeader  bool   `validate:"required" json:"isLeader"`
-	LeaderId  string `validate:"required" json:"leaderId"`
-	RequestId string `validate:"required" json:"requestId" format:"uuid"`
 }
 
 type GetClusterInfoResponse struct {

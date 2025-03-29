@@ -45,7 +45,7 @@ func (s *Storage) CompareAndSet(key string, oldValue any, newValue any) (bool, e
 	v, ok := s.storage[key]
 
 	if !ok {
-		return false, fmt.Errorf("key %s doesn't exist", key)
+		return false, fmt.Errorf("key \"%s\" doesn't exist", key)
 	}
 
 	var success = false

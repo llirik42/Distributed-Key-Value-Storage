@@ -22,7 +22,7 @@ definitions:
     - matchIndex
     - nextIndex
     type: object
-  client_interaction.DeleteKeyResponse:
+  client_interaction.CommandResponse:
     properties:
       isLeader:
         type: boolean
@@ -35,6 +35,11 @@ definitions:
     - isLeader
     - leaderId
     - requestId
+    type: object
+  client_interaction.CompareAndSetKeyValueRequest:
+    properties:
+      newValue: {}
+      oldValue: {}
     type: object
   client_interaction.ErrorResponse:
     properties:
@@ -122,25 +127,9 @@ definitions:
     - command
     - term
     type: object
-  client_interaction.SetKeyRequest:
+  client_interaction.SetKeyValueRequest:
     properties:
       value: {}
-    required:
-    - value
-    type: object
-  client_interaction.SetKeyResponse:
-    properties:
-      isLeader:
-        type: boolean
-      leaderId:
-        type: string
-      requestId:
-        format: uuid
-        type: string
-    required:
-    - isLeader
-    - leaderId
-    - requestId
     type: object
 info:
   contact: {}
@@ -181,7 +170,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/client_interaction.DeleteKeyResponse'
+            $ref: '#/definitions/client_interaction.CommandResponse'
       summary: Delete Key Value
       tags:
       - key
@@ -201,6 +190,32 @@ paths:
       summary: Get Key Value
       tags:
       - key
+    patch:
+      operationId: '"CompareAndSetKeyValue"'
+      parameters:
+      - description: ' '
+        in: path
+        name: key
+        required: true
+        type: string
+      - description: ' '
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/client_interaction.CompareAndSetKeyValueRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/client_interaction.CommandResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/client_interaction.ErrorResponse'
+      summary: Compare And Set Key Value
+      tags:
+      - key
     post:
       description: Sets value for the given key. If the old value already exists,
         it is replaced by a new one.
@@ -216,12 +231,12 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/client_interaction.SetKeyRequest'
+          $ref: '#/definitions/client_interaction.SetKeyValueRequest'
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/client_interaction.SetKeyResponse'
+            $ref: '#/definitions/client_interaction.CommandResponse'
         "400":
           description: Bad Request
           schema:
