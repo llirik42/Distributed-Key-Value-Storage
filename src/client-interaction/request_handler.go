@@ -3,6 +3,7 @@ package client_interaction
 import (
 	"distributed-algorithms/src/context"
 	"distributed-algorithms/src/log"
+	"distributed-algorithms/src/log/executor"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -207,6 +208,36 @@ func (handler *RequestHandler) GetLog(c *gin.Context) {
 		IsLeader: ctx.IsLeader(),
 		LeaderId: ctx.GetLeaderId(),
 		Entries:  mapLogEntries(entries),
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// GetCommandExecutionInfo
+// @Id "GetCommandExecutionInfo"
+// @Router /command/{commandId} [get]
+// @Summary Get Command Execution Info
+// @Tags storage
+// @Success 200 {object} GetCommandExecutionInfoResponse
+func (handler *RequestHandler) GetCommandExecutionInfo(c *gin.Context) {
+	commandId := c.Param("commandId")
+	ctx := handler.ctx
+	ctx.Lock()
+	defer ctx.Unlock()
+
+	info, exists := executor.GetCommandExecutionInfo(
+		ctx.GetKeyValueStorage(),
+		ctx.GetExecutedCommandsKey(),
+		commandId,
+	)
+
+	response := GetCommandExecutionInfoResponse{
+		Found: exists,
+		Info: CommandExecutionInfo{
+			Value:   info.Value,
+			Message: info.Message,
+			Success: info.Success,
+		},
 	}
 
 	c.JSON(http.StatusOK, response)

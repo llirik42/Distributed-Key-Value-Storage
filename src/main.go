@@ -29,7 +29,7 @@ func main() {
 
 	ctx := context.NewContext(cfg.RaftConfig)
 	keyValueStorage := kv.NewStorage()
-	commandExecutor := executor.NewCommandExecutor(ctx, cfg.RaftConfig.ExecutedCommandsKey)
+	commandExecutor := executor.NewCommandExecutor(ctx)
 	logStorage := log.NewStorage()
 
 	ctx.SetKeyValueStorage(keyValueStorage)

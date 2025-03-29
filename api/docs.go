@@ -49,6 +49,23 @@ const docTemplate = `{
                 }
             }
         },
+        "/command/{commandId}": {
+            "get": {
+                "tags": [
+                    "storage"
+                ],
+                "summary": "Get Command Execution Info",
+                "operationId": "\"GetCommandExecutionInfo\"",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/client_interaction.GetCommandExecutionInfoResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/key/{key}": {
             "get": {
                 "tags": [
@@ -214,6 +231,23 @@ const docTemplate = `{
                 }
             }
         },
+        "client_interaction.CommandExecutionInfo": {
+            "type": "object",
+            "required": [
+                "message",
+                "success",
+                "value"
+            ],
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                },
+                "value": {}
+            }
+        },
         "client_interaction.CommandResponse": {
             "type": "object",
             "required": [
@@ -267,6 +301,21 @@ const docTemplate = `{
                 },
                 "leaderId": {
                     "type": "string"
+                }
+            }
+        },
+        "client_interaction.GetCommandExecutionInfoResponse": {
+            "type": "object",
+            "required": [
+                "found",
+                "info"
+            ],
+            "properties": {
+                "found": {
+                    "type": "boolean"
+                },
+                "info": {
+                    "$ref": "#/definitions/client_interaction.CommandExecutionInfo"
                 }
             }
         },

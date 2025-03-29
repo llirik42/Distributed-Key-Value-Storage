@@ -15,10 +15,10 @@ type CommandExecutor struct {
 	executedCommandsKey string
 }
 
-func NewCommandExecutor(ctx *context.Context, executedCommandsKey string) *CommandExecutor {
+func NewCommandExecutor(ctx *context.Context) *CommandExecutor {
 	return &CommandExecutor{
 		ctx:                 ctx,
-		executedCommandsKey: executedCommandsKey,
+		executedCommandsKey: ctx.GetExecutedCommandsKey(),
 	}
 }
 
@@ -46,56 +46,63 @@ func (e *CommandExecutor) Execute(cmd log.Command) {
 func (e *CommandExecutor) executeSet(cmd log.Command, isLeader bool) {
 	storage := e.ctx.GetKeyValueStorage()
 
-	var commandExecutionResult string
+	var info CommandExecutionInfo
 
 	if cmd.Key != e.executedCommandsKey {
 		storage.Set(cmd.Key, cmd.NewValue)
-		commandExecutionResult = Success
+		info.Message = Success
+		info.Success = true
 	} else {
-		commandExecutionResult = "cannot set value of internal key"
+		info.Message = "cannot set value of internal key"
+		info.Success = false
 	}
 
 	if isLeader {
-		e.pushCommandForExecutionInfo(cmd.Id, commandExecutionResult)
+		e.pushCommandForExecutionInfo(cmd.Id, info)
 	}
 }
 
 func (e *CommandExecutor) executeDelete(cmd log.Command, isLeader bool) {
 	storage := e.ctx.GetKeyValueStorage()
 
-	var commandExecutionResult string
+	var info CommandExecutionInfo
 
 	if cmd.Key != e.executedCommandsKey {
 		storage.Delete(cmd.Key)
-		commandExecutionResult = Success
+		info.Message = Success
+		info.Success = true
 	} else {
-		commandExecutionResult = "cannot delete internal key"
+		info.Message = "cannot delete internal key"
+		info.Success = false
 	}
 
 	if isLeader {
-		e.pushCommandForExecutionInfo(cmd.Id, commandExecutionResult)
+		e.pushCommandForExecutionInfo(cmd.Id, info)
 	}
 }
 
 func (e *CommandExecutor) executeCompareAndSet(cmd log.Command, isLeader bool) {
 	storage := e.ctx.GetKeyValueStorage()
 
-	var commandExecutionResult = Success
+	var info = CommandExecutionInfo{Success: false}
 
 	if cmd.Key != e.executedCommandsKey {
 		success, err := storage.CompareAndSet(cmd.Key, cmd.OldValue, cmd.NewValue)
 
 		if err != nil {
-			commandExecutionResult = err.Error()
+			info.Message = err.Error()
 		} else if !success {
-			commandExecutionResult = "old value does not match"
+			info.Message = "old value does not match"
+		} else {
+			info.Message = Success
+			info.Success = true
 		}
 	} else {
-		commandExecutionResult = "cannot executed compare-and-set with internal key"
+		info.Message = "cannot executed compare-and-set with internal key"
 	}
 
 	if isLeader {
-		e.pushCommandForExecutionInfo(cmd.Id, commandExecutionResult)
+		e.pushCommandForExecutionInfo(cmd.Id, info)
 	}
 }
 
@@ -106,11 +113,11 @@ func (e *CommandExecutor) executeAddElement(cmd log.Command) {
 }
 
 // Pushes to log command that will add info about execution of other command
-func (e *CommandExecutor) pushCommandForExecutionInfo(commandId string, result string) {
+func (e *CommandExecutor) pushCommandForExecutionInfo(commandId string, info CommandExecutionInfo) {
 	e.ctx.PushCommand(log.Command{
 		Key:      e.executedCommandsKey,
 		SubKey:   commandId,
-		NewValue: result,
+		NewValue: commandExecutionInfoToMap(info),
 		Type:     log.AddElement,
 	})
 }

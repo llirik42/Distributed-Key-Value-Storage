@@ -178,6 +178,10 @@ func (ctx *Context) GetClusterSize() uint32 {
 	return 1 + uint32(len(ctx.cfg.OtherNodes))
 }
 
+func (ctx *Context) GetExecutedCommandsKey() string {
+	return ctx.cfg.ExecutedCommandsKey
+}
+
 func (ctx *Context) PushCommand(cmd log.Command) string {
 	commandId := uuid.NewString()
 

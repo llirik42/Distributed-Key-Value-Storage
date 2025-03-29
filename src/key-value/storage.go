@@ -15,4 +15,6 @@ type Storage interface {
 	Delete(key string)
 
 	AddElement(key string, subKey string, value any)
+
+	GetElement(key string, subKey string) Value
 }

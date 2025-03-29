@@ -24,6 +24,12 @@ type LogCommand struct {
 	Type     string `enums:"set,compare_and_set,delete,add_element" validate:"required" json:"type"`
 }
 
+type CommandExecutionInfo struct {
+	Value   any    `validate:"required" json:"value"`
+	Message string `validate:"required" json:"message"`
+	Success bool   `validate:"required" json:"success"`
+}
+
 type LogEntry struct {
 	Term    uint32     `validate:"required" json:"term"`
 	Command LogCommand `validate:"required" json:"command"`
@@ -65,4 +71,9 @@ type GetLogResponse struct {
 	IsLeader bool       `validate:"required" json:"isLeader"`
 	LeaderId string     `validate:"required" json:"leaderId"`
 	Entries  []LogEntry `validate:"required" json:"entries"`
+}
+
+type GetCommandExecutionInfoResponse struct {
+	Found bool                 `validate:"required" json:"found"`
+	Info  CommandExecutionInfo `validate:"required" json:"info"`
 }

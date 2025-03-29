@@ -20,6 +20,7 @@ func StartServer(ctx *context.Context, cfg config.RestConfig) error {
 	router.DELETE("/key/:key", restapiHandler.DeleteKey)
 	router.GET("/cluster/info", restapiHandler.GetClusterInfo)
 	router.GET("/cluster/log", restapiHandler.GetLog)
+	router.GET("/command/:commandId", restapiHandler.GetCommandExecutionInfo)
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
 	return router.Run(cfg.Address)

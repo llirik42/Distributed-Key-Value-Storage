@@ -22,6 +22,18 @@ definitions:
     - matchIndex
     - nextIndex
     type: object
+  client_interaction.CommandExecutionInfo:
+    properties:
+      message:
+        type: string
+      success:
+        type: boolean
+      value: {}
+    required:
+    - message
+    - success
+    - value
+    type: object
   client_interaction.CommandResponse:
     properties:
       isLeader:
@@ -59,6 +71,16 @@ definitions:
     required:
     - isLeader
     - leaderId
+    type: object
+  client_interaction.GetCommandExecutionInfoResponse:
+    properties:
+      found:
+        type: boolean
+      info:
+        $ref: '#/definitions/client_interaction.CommandExecutionInfo'
+    required:
+    - found
+    - info
     type: object
   client_interaction.GetKeyResponse:
     properties:
@@ -156,6 +178,17 @@ paths:
       summary: Get Log
       tags:
       - cluster
+  /command/{commandId}:
+    get:
+      operationId: '"GetCommandExecutionInfo"'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/client_interaction.GetCommandExecutionInfoResponse'
+      summary: Get Command Execution Info
+      tags:
+      - storage
   /key/{key}:
     delete:
       description: Deletes value for the given key

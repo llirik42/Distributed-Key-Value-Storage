@@ -75,3 +75,23 @@ func (s *Storage) AddElement(key string, subKey string, value any) {
 		s.storage[key].(map[string]any)[subKey] = value
 	}
 }
+
+func (s *Storage) GetElement(key string, subKey string) key_value.Value {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	rootValue, rootOk := s.storage[key]
+	if !rootOk {
+		return key_value.Value{}
+	}
+
+	elementValue, elementOk := rootValue.(map[string]any)[subKey]
+	if !elementOk {
+		return key_value.Value{}
+	}
+
+	return key_value.Value{
+		Value:  elementValue,
+		Exists: true,
+	}
+}
