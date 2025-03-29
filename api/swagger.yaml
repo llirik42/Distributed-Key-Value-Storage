@@ -90,17 +90,26 @@ definitions:
     type: object
   client_interaction.LogCommand:
     properties:
+      id:
+        format: uuid
+        type: string
       key:
         type: string
       newValue: {}
       oldValue: {}
+      subKey:
+        type: string
       type:
         enum:
         - set
+        - compare_and_set
         - delete
+        - add_element
         type: string
     required:
+    - id
     - key
+    - subKey
     - type
     type: object
   client_interaction.LogEntry:

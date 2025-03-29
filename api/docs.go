@@ -274,20 +274,31 @@ const docTemplate = `{
         "client_interaction.LogCommand": {
             "type": "object",
             "required": [
+                "id",
                 "key",
+                "subKey",
                 "type"
             ],
             "properties": {
+                "id": {
+                    "type": "string",
+                    "format": "uuid"
+                },
                 "key": {
                     "type": "string"
                 },
                 "newValue": {},
                 "oldValue": {},
+                "subKey": {
+                    "type": "string"
+                },
                 "type": {
                     "type": "string",
                     "enum": [
                         "set",
-                        "delete"
+                        "compare_and_set",
+                        "delete",
+                        "add_element"
                     ]
                 }
             }
