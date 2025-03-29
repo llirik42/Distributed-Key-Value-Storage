@@ -5,7 +5,6 @@ import (
 	"distributed-algorithms/src/key-value"
 	"distributed-algorithms/src/log"
 	"distributed-algorithms/src/raft/transport"
-	"fmt"
 	"github.com/google/uuid"
 	logging "log"
 	"math/rand"
@@ -189,7 +188,6 @@ func (ctx *Context) PushCommand(cmd log.Command) string {
 		Command: cmd,
 	}
 
-	fmt.Printf("Pushing %+v\n", entry)
 	ctx.logStorage.PushLogEntry(entry)
 
 	return commandId

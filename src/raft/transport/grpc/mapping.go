@@ -4,6 +4,7 @@ import (
 	pb "distributed-algorithms/generated/proto"
 	"distributed-algorithms/src/log"
 	"distributed-algorithms/src/raft/dto"
+	"fmt"
 )
 
 func MapRequestForVoteRequestToGRPC(msg *dto.RequestVoteRequest) *pb.RequestVoteRequest {
@@ -100,6 +101,7 @@ func mapCommandToGRPC(command *log.Command) *pb.Command {
 	switch command.Type {
 	case log.Set:
 		return &pb.Command{
+			Id: command.Id,
 			Type: &pb.Command_Set_{
 				Set: &pb.Command_Set{
 					Key:   command.Key,
@@ -109,6 +111,7 @@ func mapCommandToGRPC(command *log.Command) *pb.Command {
 		}
 	case log.CompareAndSet:
 		return &pb.Command{
+			Id: command.Id,
 			Type: &pb.Command_CompareAndSet_{
 				CompareAndSet: &pb.Command_CompareAndSet{
 					Key:      command.Key,
@@ -119,6 +122,7 @@ func mapCommandToGRPC(command *log.Command) *pb.Command {
 		}
 	case log.Delete:
 		return &pb.Command{
+			Id: command.Id,
 			Type: &pb.Command_Delete_{
 				Delete: &pb.Command_Delete{
 					Key: command.Key,
@@ -127,6 +131,7 @@ func mapCommandToGRPC(command *log.Command) *pb.Command {
 		}
 	case log.AddElement:
 		return &pb.Command{
+			Id: command.Id,
 			Type: &pb.Command_AddElement_{
 				AddElement: &pb.Command_AddElement{
 					Key:    command.Key,
@@ -135,8 +140,8 @@ func mapCommandToGRPC(command *log.Command) *pb.Command {
 				},
 			},
 		}
-	default: // Unknown type
-		return nil
+	default:
+		panic(fmt.Errorf("unknown command type: %d\n", command.Type))
 	}
 }
 
@@ -146,6 +151,7 @@ func mapCommandFromGRPC(command *pb.Command) *log.Command {
 		cmd := command.GetSet()
 
 		return &log.Command{
+			Id:       command.Id,
 			Key:      cmd.Key,
 			NewValue: mapValueFromGRPC(cmd.Value),
 			Type:     log.Set,
@@ -154,6 +160,7 @@ func mapCommandFromGRPC(command *pb.Command) *log.Command {
 		cmd := command.GetCompareAndSet()
 
 		return &log.Command{
+			Id:       command.Id,
 			Key:      cmd.Key,
 			OldValue: mapValueFromGRPC(cmd.OldValue),
 			NewValue: mapValueFromGRPC(cmd.NewValue),
@@ -163,6 +170,7 @@ func mapCommandFromGRPC(command *pb.Command) *log.Command {
 		cmd := command.GetDelete()
 
 		return &log.Command{
+			Id:   command.Id,
 			Key:  cmd.Key,
 			Type: log.Delete,
 		}
@@ -170,13 +178,14 @@ func mapCommandFromGRPC(command *pb.Command) *log.Command {
 		cmd := command.GetAddElement()
 
 		return &log.Command{
+			Id:       command.Id,
 			Key:      cmd.Key,
 			SubKey:   cmd.SubKey,
 			NewValue: mapValueFromGRPC(cmd.Value),
 			Type:     log.AddElement,
 		}
 	default: // Unknown type
-		return nil
+		panic(fmt.Errorf("unknown of command: %T\n", command.Type))
 	}
 }
 
@@ -232,8 +241,8 @@ func mapValueToGRPC(value *any) *pb.Value {
 				Object: &pb.Value_Object{Value: pbValue},
 			},
 		}
-	default: // Unknown type
-		return nil
+	default:
+		panic(fmt.Errorf("unknown type of value: %T\n", v))
 	}
 }
 
@@ -265,7 +274,7 @@ func mapValueFromGRPC(value *pb.Value) any {
 		}
 
 		return result
-	default: // Unknown type
-		return nil
+	default:
+		panic(fmt.Errorf("unknown type of value: %T\n", value.Type))
 	}
 }

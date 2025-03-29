@@ -59,11 +59,13 @@ message Command {
   }
 
   oneof Type {
-    Set set = 1;
-    CompareAndSet compareAndSet = 2;
-    Delete delete = 3;
-    AddElement addElement = 4;
+    Set set = 2;
+    CompareAndSet compareAndSet = 3;
+    Delete delete = 4;
+    AddElement addElement = 5;
   }
+
+  string id = 1;
 }
 
 message LogEntry {
