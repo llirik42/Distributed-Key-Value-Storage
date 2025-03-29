@@ -37,6 +37,10 @@ message Value {
 }
 
 message Command {
+  message Get {
+    string key = 1;
+  }
+
   message Set {
     string key = 1;
     Value value = 2;
@@ -59,10 +63,11 @@ message Command {
   }
 
   oneof Type {
-    Set set = 2;
-    CompareAndSet compareAndSet = 3;
-    Delete delete = 4;
-    AddElement addElement = 5;
+    Get get = 2;
+    Set set = 3;
+    CompareAndSet compareAndSet = 4;
+    Delete delete = 5;
+    AddElement addElement = 6;
   }
 
   string id = 1;

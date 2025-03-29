@@ -2,7 +2,8 @@ package log
 
 // Type of command
 const (
-	Set = iota
+	Get = iota
+	Set
 	CompareAndSet
 	Delete
 	AddElement

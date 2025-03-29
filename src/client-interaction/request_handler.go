@@ -100,28 +100,24 @@ func (handler *RequestHandler) CompareAndSetKeyValue(c *gin.Context) {
 // @Summary Get Key Value
 // @Tags key
 // @Param key path string true " "
-// @Success 200 {object} GetKeyResponse
+// @Success 200 {object} CommandResponse
 func (handler *RequestHandler) GetKeyValue(c *gin.Context) {
 	key := c.Param("key")
 	ctx := handler.ctx
 	ctx.Lock()
 	defer ctx.Unlock()
 
-	keyValueStorage := ctx.GetKeyValueStorage()
-	value := keyValueStorage.Get(key)
-
-	var code string
-	if value.Exists {
-		code = Success
-	} else {
-		code = NotFound
+	var requestId = ""
+	isLeader := ctx.IsLeader()
+	if isLeader {
+		cmd := createGetKeyCommand(key)
+		requestId = ctx.PushCommand(cmd)
 	}
 
-	response := GetKeyResponse{
-		IsLeader: ctx.IsLeader(),
-		Value:    value.Value,
-		Code:     code,
-		LeaderId: ctx.GetLeaderId(),
+	response := CommandResponse{
+		IsLeader:  isLeader,
+		LeaderId:  ctx.GetLeaderId(),
+		RequestId: requestId,
 	}
 
 	c.JSON(http.StatusOK, response)
@@ -243,6 +239,13 @@ func (handler *RequestHandler) GetCommandExecutionInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+func createGetKeyCommand(key string) log.Command {
+	return log.Command{
+		Key:  key,
+		Type: log.Get,
+	}
+}
+
 func createSetKeyCommand(key string, request *SetKeyValueRequest) log.Command {
 	return log.Command{
 		Key:      key,
@@ -291,6 +294,8 @@ func mapLogEntries(entries []log.Entry) []LogEntry {
 
 func mapCommandType(cmdType int) string {
 	switch cmdType {
+	case log.Get:
+		return Get
 	case log.Set:
 		return Set
 	case log.CompareAndSet:

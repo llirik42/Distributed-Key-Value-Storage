@@ -99,6 +99,15 @@ func mapLogEntriesToGRPC(entries *[]log.Entry) []*pb.LogEntry {
 
 func mapCommandToGRPC(command *log.Command) *pb.Command {
 	switch command.Type {
+	case log.Get:
+		return &pb.Command{
+			Id: command.Id,
+			Type: &pb.Command_Get_{
+				Get: &pb.Command_Get{
+					Key: command.Key,
+				},
+			},
+		}
 	case log.Set:
 		return &pb.Command{
 			Id: command.Id,
@@ -147,6 +156,14 @@ func mapCommandToGRPC(command *log.Command) *pb.Command {
 
 func mapCommandFromGRPC(command *pb.Command) *log.Command {
 	switch command.Type.(type) {
+	case *pb.Command_Get_:
+		cmd := command.GetGet()
+
+		return &log.Command{
+			Id:   command.Id,
+			Key:  cmd.Key,
+			Type: log.Get,
+		}
 	case *pb.Command_Set_:
 		cmd := command.GetSet()
 

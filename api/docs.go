@@ -86,7 +86,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/client_interaction.GetKeyResponse"
+                            "$ref": "#/definitions/client_interaction.CommandResponse"
                         }
                     }
                 }
@@ -317,31 +317,6 @@ const docTemplate = `{
                 "info": {
                     "$ref": "#/definitions/client_interaction.CommandExecutionInfo"
                 }
-            }
-        },
-        "client_interaction.GetKeyResponse": {
-            "type": "object",
-            "required": [
-                "code",
-                "isLeader",
-                "leaderId",
-                "value"
-            ],
-            "properties": {
-                "code": {
-                    "type": "string",
-                    "enum": [
-                        "success",
-                        "not_found"
-                    ]
-                },
-                "isLeader": {
-                    "type": "boolean"
-                },
-                "leaderId": {
-                    "type": "string"
-                },
-                "value": {}
             }
         },
         "client_interaction.GetLogResponse": {

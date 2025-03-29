@@ -30,6 +30,8 @@ func (e *CommandExecutor) Execute(cmd log.Command) {
 	isLeader := e.ctx.IsLeader()
 
 	switch cmd.Type {
+	case log.Get:
+		e.executeGet(cmd, isLeader)
 	case log.Set:
 		e.executeSet(cmd, isLeader)
 	case log.CompareAndSet:
@@ -40,6 +42,32 @@ func (e *CommandExecutor) Execute(cmd log.Command) {
 		e.executeAddElement(cmd)
 	default:
 		panic(fmt.Errorf("unknown type of command %+v", cmd))
+	}
+}
+
+func (e *CommandExecutor) executeGet(cmd log.Command, isLeader bool) {
+	storage := e.ctx.GetKeyValueStorage()
+
+	var info CommandExecutionInfo
+
+	if cmd.Key != e.executedCommandsKey {
+		value := storage.Get(cmd.Key)
+
+		if !value.Exists {
+			info.Message = "key not found"
+			info.Success = false
+		} else {
+			info.Message = Success
+			info.Success = true
+			info.Value = value.Value
+		}
+	} else {
+		info.Message = "cannot get value of internal key"
+		info.Success = false
+	}
+
+	if isLeader {
+		e.pushCommandForExecutionInfo(cmd.Id, info)
 	}
 }
 

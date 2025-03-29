@@ -1,6 +1,7 @@
 package client_interaction
 
 const (
+	Get           = "get"
 	Set           = "set"
 	CompareAndSet = "compare_and_set"
 	Delete        = "delete"
@@ -52,13 +53,6 @@ type CommandResponse struct {
 	IsLeader  bool   `validate:"required" json:"isLeader"`
 	LeaderId  string `validate:"required" json:"leaderId"`
 	RequestId string `validate:"required" json:"requestId" format:"uuid"`
-}
-
-type GetKeyResponse struct {
-	IsLeader bool   `validate:"required" json:"isLeader"`
-	Value    any    `validate:"required" json:"value"`
-	Code     string `enums:"success,not_found" validate:"required" json:"code"`
-	LeaderId string `validate:"required" json:"leaderId"`
 }
 
 type GetClusterInfoResponse struct {
