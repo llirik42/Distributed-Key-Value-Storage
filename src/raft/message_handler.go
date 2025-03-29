@@ -67,8 +67,11 @@ func (handler *MessageHandler) HandleAppendEntriesRequest(
 	defer ctx.Unlock()
 
 	logStorage := ctx.GetLogStorage()
-	a, _ := json.MarshalIndent(request, "", " ")
-	logging.Printf("Node \"%s\" received request of append-entries: %s\n", ctx.GetNodeId(), a)
+
+	if len(request.Entries) > 0 {
+		a, _ := json.MarshalIndent(request, "", " ")
+		logging.Printf("Node \"%s\" received request of append-entries: %s\n", ctx.GetNodeId(), a)
+	}
 
 	checkTerm(ctx, request.Term) // TODO: Check this in gRPC-interceptor
 
@@ -137,10 +140,7 @@ func (handler *MessageHandler) HandleAppendEntriesResponse(
 	ctx := handler.ctx
 	ctx.Lock()
 	defer ctx.Unlock()
-
-	a, _ := json.MarshalIndent(response, "", " ")
-	logging.Printf("Node \"%s\" received response of append-entries: %s\n", ctx.GetNodeId(), a)
-
+	
 	checkTerm(ctx, response.Term) // TODO: Check this in gRPC-interceptor
 
 	clientIndex := client.GetIndex() // Index of responder's connection

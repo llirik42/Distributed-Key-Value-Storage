@@ -1,21 +1,5 @@
 package log
 
-import (
-	"distributed-algorithms/src/key-value"
-	"fmt"
-)
-
-func ApplyCommand(cmd Command, storage key_value.Storage) {
-	switch cmd.Type {
-	case Set:
-		storage.Set(cmd.Key, cmd.Value)
-	case Delete:
-		storage.Delete(cmd.Key)
-	default:
-		panic(fmt.Errorf("unknown type of command %+v", cmd))
-	}
-}
-
 // CompareEntries Compares two log entries by term and index
 //
 // Return value:

@@ -9,5 +9,6 @@ type RaftConfig struct {
 		Address string `env:"SELF_ADDRESS,required"`
 		Id      string `env:"SELF_ID,required"`
 	}
-	OtherNodes []string `env:"OTHER_NODES,required"`
+	OtherNodes          []string `env:"OTHER_NODES,required"`
+	ExecutedCommandsKey string   `env:"EXECUTED_COMMANDS_KEY,required"`
 }

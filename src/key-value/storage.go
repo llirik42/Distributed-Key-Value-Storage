@@ -10,5 +10,9 @@ type Storage interface {
 
 	Set(key string, value any)
 
+	CompareAndSet(key string, oldValue any, newValue any) (bool, error)
+
 	Delete(key string)
+
+	AddElement(key string, subKey string, value any)
 }

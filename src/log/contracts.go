@@ -15,3 +15,7 @@ type Storage interface {
 
 	AddLogEntry(entry Entry, index uint64)
 }
+
+type CommandExecutor interface {
+	Execute(cmd Command)
+}

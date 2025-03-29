@@ -28,9 +28,13 @@ definitions:
         type: boolean
       leaderId:
         type: string
+      requestId:
+        format: uuid
+        type: string
     required:
     - isLeader
     - leaderId
+    - requestId
     type: object
   client_interaction.ErrorResponse:
     properties:
@@ -88,12 +92,13 @@ definitions:
     properties:
       key:
         type: string
+      newValue: {}
+      oldValue: {}
       type:
         enum:
         - set
         - delete
         type: string
-      value: {}
     required:
     - key
     - type
@@ -120,9 +125,13 @@ definitions:
         type: boolean
       leaderId:
         type: string
+      requestId:
+        format: uuid
+        type: string
     required:
     - isLeader
     - leaderId
+    - requestId
     type: object
 info:
   contact: {}

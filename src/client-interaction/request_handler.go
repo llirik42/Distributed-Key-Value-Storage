@@ -3,6 +3,7 @@ package client_interaction
 import (
 	"distributed-algorithms/src/context"
 	"distributed-algorithms/src/log"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -39,15 +40,17 @@ func (handler *RequestHandler) SetKey(c *gin.Context) {
 		return
 	}
 
+	var requestId = ""
 	isLeader := ctx.IsLeader()
 	if isLeader {
 		cmd := createSetKeyCommand(key, &request)
-		ctx.PushCommand(cmd)
+		requestId = ctx.PushCommand(cmd)
 	}
 
 	response := SetKeyResponse{
-		IsLeader: isLeader,
-		LeaderId: ctx.GetLeaderId(),
+		IsLeader:  isLeader,
+		LeaderId:  ctx.GetLeaderId(),
+		RequestId: requestId,
 	}
 
 	c.JSON(http.StatusOK, response)
@@ -100,15 +103,17 @@ func (handler *RequestHandler) DeleteKey(c *gin.Context) {
 	ctx.Lock()
 	defer ctx.Unlock()
 
+	var requestId = ""
 	isLeader := ctx.IsLeader()
 	if isLeader {
 		cmd := createDeleteKeyCommand(key)
-		ctx.PushCommand(cmd)
+		requestId = ctx.PushCommand(cmd)
 	}
 
 	response := DeleteKeyResponse{
-		IsLeader: isLeader,
-		LeaderId: ctx.GetLeaderId(),
+		IsLeader:  isLeader,
+		LeaderId:  ctx.GetLeaderId(),
+		RequestId: requestId,
 	}
 
 	c.JSON(http.StatusOK, response)
@@ -172,9 +177,9 @@ func (handler *RequestHandler) GetLog(c *gin.Context) {
 
 func createSetKeyCommand(key string, request *SetKeyRequest) log.Command {
 	return log.Command{
-		Key:   key,
-		Value: request.Value,
-		Type:  log.Set,
+		Key:      key,
+		NewValue: request.Value,
+		Type:     log.Set,
 	}
 }
 
@@ -194,9 +199,12 @@ func mapLogEntries(entries []log.Entry) []LogEntry {
 		result[i] = LogEntry{
 			Term: v.Term,
 			Command: LogCommand{
-				Key:   cmd.Key,
-				Value: cmd.Value,
-				Type:  mapCommandType(cmd.Type),
+				Id:       cmd.Id,
+				Key:      cmd.Key,
+				SubKey:   cmd.SubKey,
+				OldValue: cmd.OldValue,
+				NewValue: cmd.NewValue,
+				Type:     mapCommandType(cmd.Type),
 			},
 		}
 	}
@@ -208,7 +216,13 @@ func mapCommandType(cmdType int) string {
 	switch cmdType {
 	case log.Set:
 		return Set
-	default:
+	case log.CompareAndSet:
+		return CompareAndSet
+	case log.Delete:
 		return Delete
+	case log.AddElement:
+		return AddElement
+	default:
+		panic(fmt.Errorf("unknown command type: %d", cmdType))
 	}
 }

@@ -1,8 +1,10 @@
 package client_interaction
 
 const (
-	Set    = "set"
-	Delete = "delete"
+	Set           = "set"
+	CompareAndSet = "compare_and_set"
+	Delete        = "delete"
+	AddElement    = "add_element"
 )
 
 type ClusterInfo struct {
@@ -14,9 +16,12 @@ type ClusterInfo struct {
 }
 
 type LogCommand struct {
-	Key   string `validate:"required" json:"key"`
-	Value any    `json:"value"`
-	Type  string `enums:"set,delete" validate:"required" json:"type"`
+	Id       string `validate:"required" json:"id" format:"uuid"`
+	Key      string `validate:"required" json:"key"`
+	SubKey   string `validate:"required" json:"subKey"`
+	OldValue any    `json:"oldValue"`
+	NewValue any    `json:"newValue"`
+	Type     string `enums:"set,compare_and_set,delete,add_element" validate:"required" json:"type"`
 }
 
 type LogEntry struct {
@@ -33,8 +38,9 @@ type SetKeyRequest struct {
 }
 
 type SetKeyResponse struct {
-	IsLeader bool   `validate:"required" json:"isLeader"`
-	LeaderId string `validate:"required" json:"leaderId"`
+	IsLeader  bool   `validate:"required" json:"isLeader"`
+	LeaderId  string `validate:"required" json:"leaderId"`
+	RequestId string `validate:"required" json:"requestId" format:"uuid"`
 }
 
 type GetKeyResponse struct {
@@ -45,8 +51,9 @@ type GetKeyResponse struct {
 }
 
 type DeleteKeyResponse struct {
-	IsLeader bool   `validate:"required" json:"isLeader"`
-	LeaderId string `validate:"required" json:"leaderId"`
+	IsLeader  bool   `validate:"required" json:"isLeader"`
+	LeaderId  string `validate:"required" json:"leaderId"`
+	RequestId string `validate:"required" json:"requestId" format:"uuid"`
 }
 
 type GetClusterInfoResponse struct {

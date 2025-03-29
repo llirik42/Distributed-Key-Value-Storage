@@ -5,6 +5,7 @@ import (
 	"distributed-algorithms/src/config"
 	"distributed-algorithms/src/context"
 	kv "distributed-algorithms/src/key-value/in-memory"
+	"distributed-algorithms/src/log/executor"
 	log "distributed-algorithms/src/log/in-memory"
 	"distributed-algorithms/src/raft/node"
 	"distributed-algorithms/src/raft/transport/grpc"
@@ -27,8 +28,13 @@ func main() {
 	}
 
 	ctx := context.NewContext(cfg.RaftConfig)
-	ctx.SetKeyValueStorage(kv.NewStorage())
-	ctx.SetLogStorage(log.NewStorage())
+	keyValueStorage := kv.NewStorage()
+	commandExecutor := executor.NewCommandExecutor(ctx, cfg.RaftConfig.ExecutedCommandsKey)
+	logStorage := log.NewStorage()
+
+	ctx.SetKeyValueStorage(keyValueStorage)
+	ctx.SetLogStorage(logStorage)
+	ctx.SetCommandExecutor(commandExecutor)
 
 	serverFactory := grpc.NewServerFactory()
 	clientFactory := grpc.NewClientFactory()

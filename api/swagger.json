@@ -168,7 +168,8 @@
             "type": "object",
             "required": [
                 "isLeader",
-                "leaderId"
+                "leaderId",
+                "requestId"
             ],
             "properties": {
                 "isLeader": {
@@ -176,6 +177,10 @@
                 },
                 "leaderId": {
                     "type": "string"
+                },
+                "requestId": {
+                    "type": "string",
+                    "format": "uuid"
                 }
             }
         },
@@ -265,14 +270,15 @@
                 "key": {
                     "type": "string"
                 },
+                "newValue": {},
+                "oldValue": {},
                 "type": {
                     "type": "string",
                     "enum": [
                         "set",
                         "delete"
                     ]
-                },
-                "value": {}
+                }
             }
         },
         "client_interaction.LogEntry": {
@@ -303,7 +309,8 @@
             "type": "object",
             "required": [
                 "isLeader",
-                "leaderId"
+                "leaderId",
+                "requestId"
             ],
             "properties": {
                 "isLeader": {
@@ -311,6 +318,10 @@
                 },
                 "leaderId": {
                     "type": "string"
+                },
+                "requestId": {
+                    "type": "string",
+                    "format": "uuid"
                 }
             }
         }

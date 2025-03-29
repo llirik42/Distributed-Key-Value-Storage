@@ -42,13 +42,27 @@ message Command {
     Value value = 2;
   }
 
+  message CompareAndSet {
+    string key = 1;
+    Value oldValue = 2;
+    Value NewValue = 3;
+  }
+
   message Delete {
     string key = 1;
   }
 
+  message AddElement {
+    string key = 1;
+    string subKey = 2;
+    Value value = 3;
+  }
+
   oneof Type {
     Set set = 1;
-    Delete delete = 2;
+    CompareAndSet compareAndSet = 2;
+    Delete delete = 3;
+    AddElement addElement = 4;
   }
 }
 

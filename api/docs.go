@@ -179,7 +179,8 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "isLeader",
-                "leaderId"
+                "leaderId",
+                "requestId"
             ],
             "properties": {
                 "isLeader": {
@@ -187,6 +188,10 @@ const docTemplate = `{
                 },
                 "leaderId": {
                     "type": "string"
+                },
+                "requestId": {
+                    "type": "string",
+                    "format": "uuid"
                 }
             }
         },
@@ -276,14 +281,15 @@ const docTemplate = `{
                 "key": {
                     "type": "string"
                 },
+                "newValue": {},
+                "oldValue": {},
                 "type": {
                     "type": "string",
                     "enum": [
                         "set",
                         "delete"
                     ]
-                },
-                "value": {}
+                }
             }
         },
         "client_interaction.LogEntry": {
@@ -314,7 +320,8 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "isLeader",
-                "leaderId"
+                "leaderId",
+                "requestId"
             ],
             "properties": {
                 "isLeader": {
@@ -322,6 +329,10 @@ const docTemplate = `{
                 },
                 "leaderId": {
                     "type": "string"
+                },
+                "requestId": {
+                    "type": "string",
+                    "format": "uuid"
                 }
             }
         }

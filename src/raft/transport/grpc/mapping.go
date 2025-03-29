@@ -103,7 +103,17 @@ func mapCommandToGRPC(command *log.Command) *pb.Command {
 			Type: &pb.Command_Set_{
 				Set: &pb.Command_Set{
 					Key:   command.Key,
-					Value: mapValueToGRPC(&command.Value),
+					Value: mapValueToGRPC(&command.NewValue),
+				},
+			},
+		}
+	case log.CompareAndSet:
+		return &pb.Command{
+			Type: &pb.Command_CompareAndSet_{
+				CompareAndSet: &pb.Command_CompareAndSet{
+					Key:      command.Key,
+					NewValue: mapValueToGRPC(&command.NewValue),
+					OldValue: mapValueToGRPC(&command.OldValue),
 				},
 			},
 		}
@@ -115,6 +125,16 @@ func mapCommandToGRPC(command *log.Command) *pb.Command {
 				},
 			},
 		}
+	case log.AddElement:
+		return &pb.Command{
+			Type: &pb.Command_AddElement_{
+				AddElement: &pb.Command_AddElement{
+					Key:    command.Key,
+					SubKey: command.SubKey,
+					Value:  mapValueToGRPC(&command.NewValue),
+				},
+			},
+		}
 	default: // Unknown type
 		return nil
 	}
@@ -122,21 +142,38 @@ func mapCommandToGRPC(command *log.Command) *pb.Command {
 
 func mapCommandFromGRPC(command *pb.Command) *log.Command {
 	switch command.Type.(type) {
-	case *pb.Command_Delete_:
-		cmd := command.GetDelete()
-
-		return &log.Command{
-			Key:   cmd.Key,
-			Value: nil,
-			Type:  log.Delete,
-		}
 	case *pb.Command_Set_:
 		cmd := command.GetSet()
 
 		return &log.Command{
-			Key:   cmd.Key,
-			Value: mapValueFromGRPC(cmd.Value),
-			Type:  log.Set,
+			Key:      cmd.Key,
+			NewValue: mapValueFromGRPC(cmd.Value),
+			Type:     log.Set,
+		}
+	case *pb.Command_CompareAndSet_:
+		cmd := command.GetCompareAndSet()
+
+		return &log.Command{
+			Key:      cmd.Key,
+			OldValue: mapValueFromGRPC(cmd.OldValue),
+			NewValue: mapValueFromGRPC(cmd.NewValue),
+			Type:     log.CompareAndSet,
+		}
+	case *pb.Command_Delete_:
+		cmd := command.GetDelete()
+
+		return &log.Command{
+			Key:  cmd.Key,
+			Type: log.Delete,
+		}
+	case *pb.Command_AddElement_:
+		cmd := command.GetAddElement()
+
+		return &log.Command{
+			Key:      cmd.Key,
+			SubKey:   cmd.SubKey,
+			NewValue: mapValueFromGRPC(cmd.Value),
+			Type:     log.AddElement,
 		}
 	default: // Unknown type
 		return nil
