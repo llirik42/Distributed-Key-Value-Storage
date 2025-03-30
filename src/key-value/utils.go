@@ -31,7 +31,7 @@ func Equal(a, b any) bool {
 		}
 
 		for i, v := range aa {
-			if !equal(v, bb[i]) {
+			if !Equal(v, bb[i]) {
 				return false
 			}
 		}
@@ -46,7 +46,7 @@ func Equal(a, b any) bool {
 		}
 
 		for k, v := range aa {
-			if !equal(v, bb[k]) {
+			if !Equal(v, bb[k]) {
 				return false
 			}
 		}
