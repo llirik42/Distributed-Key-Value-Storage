@@ -49,7 +49,7 @@ func (s *Storage) CompareAndSet(key string, oldValue any, newValue any) (bool, e
 	}
 
 	var success = false
-	if v == oldValue {
+	if key_value.Equal(v, oldValue) {
 		success = true
 		s.storage[key] = newValue
 	}
