@@ -3,7 +3,6 @@ package client_interaction
 import (
 	"distributed-algorithms/src/context"
 	"distributed-algorithms/src/log"
-	"distributed-algorithms/src/log/executor"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -221,11 +220,9 @@ func (handler *RequestHandler) GetCommandExecutionInfo(c *gin.Context) {
 	ctx.Lock()
 	defer ctx.Unlock()
 
-	info, exists := executor.GetCommandExecutionInfo(
-		ctx.GetKeyValueStorage(),
-		ctx.GetExecutedCommandsKey(),
-		commandId,
-	)
+	commandExecutor := ctx.GetCommandExecutor()
+
+	info, exists := commandExecutor.GetCommandExecutionInfo(commandId)
 
 	response := GetCommandExecutionInfoResponse{
 		IsLeader: ctx.IsLeader(),

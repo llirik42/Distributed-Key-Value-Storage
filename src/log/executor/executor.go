@@ -15,10 +15,10 @@ type CommandExecutor struct {
 	executedCommandsKey string
 }
 
-func NewCommandExecutor(ctx *context.Context) *CommandExecutor {
+func NewCommandExecutor(ctx *context.Context, executedCommandsKey string) *CommandExecutor {
 	return &CommandExecutor{
 		ctx:                 ctx,
-		executedCommandsKey: ctx.GetExecutedCommandsKey(),
+		executedCommandsKey: executedCommandsKey,
 	}
 }
 
@@ -45,10 +45,22 @@ func (e *CommandExecutor) Execute(cmd log.Command) {
 	}
 }
 
+func (e *CommandExecutor) GetCommandExecutionInfo(commandId string) (log.CommandExecutionInfo, bool) {
+	storage := e.ctx.GetKeyValueStorage()
+
+	value := storage.GetElement(e.executedCommandsKey, commandId)
+
+	if !value.Exists {
+		return log.CommandExecutionInfo{}, false
+	}
+
+	return commandExecutionInfoFromMap(value.Value.(map[string]any)), true
+}
+
 func (e *CommandExecutor) executeGet(cmd log.Command, isLeader bool) {
 	storage := e.ctx.GetKeyValueStorage()
 
-	var info CommandExecutionInfo
+	var info log.CommandExecutionInfo
 
 	if cmd.Key != e.executedCommandsKey {
 		value := storage.Get(cmd.Key)
@@ -74,7 +86,7 @@ func (e *CommandExecutor) executeGet(cmd log.Command, isLeader bool) {
 func (e *CommandExecutor) executeSet(cmd log.Command, isLeader bool) {
 	storage := e.ctx.GetKeyValueStorage()
 
-	var info CommandExecutionInfo
+	var info log.CommandExecutionInfo
 
 	if cmd.Key != e.executedCommandsKey {
 		storage.Set(cmd.Key, cmd.NewValue)
@@ -93,7 +105,7 @@ func (e *CommandExecutor) executeSet(cmd log.Command, isLeader bool) {
 func (e *CommandExecutor) executeDelete(cmd log.Command, isLeader bool) {
 	storage := e.ctx.GetKeyValueStorage()
 
-	var info CommandExecutionInfo
+	var info log.CommandExecutionInfo
 
 	if cmd.Key != e.executedCommandsKey {
 		storage.Delete(cmd.Key)
@@ -112,7 +124,7 @@ func (e *CommandExecutor) executeDelete(cmd log.Command, isLeader bool) {
 func (e *CommandExecutor) executeCompareAndSet(cmd log.Command, isLeader bool) {
 	storage := e.ctx.GetKeyValueStorage()
 
-	var info = CommandExecutionInfo{Success: false}
+	var info = log.CommandExecutionInfo{Success: false}
 
 	if cmd.Key != e.executedCommandsKey {
 		success, err := storage.CompareAndSet(cmd.Key, cmd.OldValue, cmd.NewValue)
@@ -141,7 +153,7 @@ func (e *CommandExecutor) executeAddElement(cmd log.Command) {
 }
 
 // Pushes to log command that will add info about execution of other command
-func (e *CommandExecutor) pushCommandForExecutionInfo(commandId string, info CommandExecutionInfo) {
+func (e *CommandExecutor) pushCommandForExecutionInfo(commandId string, info log.CommandExecutionInfo) {
 	e.ctx.PushCommand(log.Command{
 		Key:      e.executedCommandsKey,
 		SubKey:   commandId,

@@ -18,4 +18,6 @@ type Storage interface {
 
 type CommandExecutor interface {
 	Execute(cmd Command)
+
+	GetCommandExecutionInfo(commandId string) (CommandExecutionInfo, bool)
 }

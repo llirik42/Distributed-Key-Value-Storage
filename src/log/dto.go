@@ -9,9 +9,10 @@ const (
 	AddElement
 )
 
-type ExecutedCommandInfo struct {
-	Code  int
-	Error string
+type CommandExecutionInfo struct {
+	Value   any
+	Message string
+	Success bool
 }
 
 type EntryMetadata struct {

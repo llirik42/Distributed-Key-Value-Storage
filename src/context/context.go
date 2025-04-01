@@ -84,6 +84,10 @@ func (ctx *Context) SetLogStorage(storage log.Storage) {
 	ctx.logStorage = storage
 }
 
+func (ctx *Context) GetCommandExecutor() log.CommandExecutor {
+	return ctx.commandExecutor
+}
+
 func (ctx *Context) SetCommandExecutor(executor log.CommandExecutor) {
 	ctx.commandExecutor = executor
 }
@@ -176,10 +180,6 @@ func (ctx *Context) SetMatchIndex(clientIndex int, value uint64) {
 
 func (ctx *Context) GetClusterSize() uint32 {
 	return 1 + uint32(len(ctx.cfg.OtherNodes))
-}
-
-func (ctx *Context) GetExecutedCommandsKey() string {
-	return ctx.cfg.ExecutedCommandsKey
 }
 
 func (ctx *Context) PushCommand(cmd log.Command) string {
