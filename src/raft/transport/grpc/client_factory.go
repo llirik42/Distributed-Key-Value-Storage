@@ -44,6 +44,7 @@ func (factory ClientFactory) NewClient(
 
 	client := &Client{
 		index:                        index,
+		address:                      address,
 		gRPCClient:                   pb.NewRaftServiceClient(gRPCConnection),
 		gRPCConnection:               gRPCConnection,
 		handleRequestForVoteResponse: handleRequestForVoteResponse,

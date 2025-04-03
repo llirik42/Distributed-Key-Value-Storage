@@ -16,6 +16,8 @@ type Client interface {
 
 	GetIndex() int
 
+	GetAddress() string
+
 	Close() error
 }
 
