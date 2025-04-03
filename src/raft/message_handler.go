@@ -72,6 +72,7 @@ func (handler *MessageHandler) HandleAppendEntriesRequest(
 
 	logStorage := ctx.GetLogStorage()
 
+	// Log request
 	if len(request.Entries) > 0 {
 		message := struct {
 			Term         uint32
