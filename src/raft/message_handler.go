@@ -26,8 +26,12 @@ func (handler *MessageHandler) HandleRequestVoteRequest(
 	defer ctx.Unlock()
 
 	logStorage := ctx.GetLogStorage()
-	a, _ := json.MarshalIndent(request, "", " ")
-	logging.Printf("Node \"%s\" received request of vote: %s\n", ctx.GetNodeId(), a)
+	jsonMessage, _ := json.MarshalIndent(request, "", " ")
+	logging.Printf(
+		"Node \"%s\" received request of vote: %s\n",
+		ctx.GetNodeId(),
+		jsonMessage,
+	)
 
 	checkTerm(ctx, request.Term) // TODO: Check this in gRPC-interceptor
 
@@ -67,8 +71,32 @@ func (handler *MessageHandler) HandleAppendEntriesRequest(
 	defer ctx.Unlock()
 
 	logStorage := ctx.GetLogStorage()
-	a, _ := json.MarshalIndent(request, "", " ")
-	logging.Printf("Node \"%s\" received request of append-entries: %s\n", ctx.GetNodeId(), a)
+
+	// Log request
+	if len(request.Entries) > 0 {
+		message := struct {
+			Term         uint32
+			LeaderId     string
+			PrevLogIndex uint64
+			PrevLogTerm  uint32
+			EntriesCount int
+			LeaderCommit uint64
+		}{
+			Term:         request.Term,
+			LeaderId:     request.LeaderId,
+			PrevLogIndex: request.PrevLogIndex,
+			PrevLogTerm:  request.PrevLogTerm,
+			EntriesCount: len(request.Entries),
+			LeaderCommit: request.LeaderCommit,
+		}
+
+		jsonMessage, _ := json.MarshalIndent(message, "", " ")
+		logging.Printf(
+			"Node \"%s\" received request of append-entries: %s\n",
+			ctx.GetNodeId(),
+			jsonMessage,
+		)
+	}
 
 	checkTerm(ctx, request.Term) // TODO: Check this in gRPC-interceptor
 
@@ -99,20 +127,25 @@ func (handler *MessageHandler) HandleAppendEntriesRequest(
 
 	ctx.BecomeFollower()
 	ctx.SetLeaderId(request.LeaderId)
-
+	
 	return &dto.AppendEntriesResponse{Term: currentTerm, Success: true}, nil
 }
 
 func (handler *MessageHandler) HandleRequestVoteResponse(
-	_ transport.Client,
+	client transport.Client,
 	response *dto.RequestVoteResponse,
 ) {
 	ctx := handler.ctx
 	ctx.Lock()
 	defer ctx.Unlock()
 
-	a, _ := json.MarshalIndent(response, "", " ")
-	logging.Printf("Node \"%s\" received response of vote: %s\n", ctx.GetNodeId(), a)
+	jsonMessage, _ := json.MarshalIndent(response, "", " ")
+	logging.Printf(
+		"Node \"%s\" received response of vote from \"%s\": %s\n",
+		ctx.GetNodeId(),
+		client.GetAddress(),
+		jsonMessage,
+	)
 
 	checkTerm(ctx, response.Term) // TODO: Check this in gRPC-interceptor
 
@@ -126,6 +159,7 @@ func (handler *MessageHandler) HandleRequestVoteResponse(
 
 	if voteNumber > clusterSize/2 {
 		ctx.BecomeLeader()
+		logging.Printf("Became leader!\n")
 		utils.SendAppendEntries(ctx)
 	}
 }
@@ -138,8 +172,14 @@ func (handler *MessageHandler) HandleAppendEntriesResponse(
 	ctx.Lock()
 	defer ctx.Unlock()
 
-	a, _ := json.MarshalIndent(response, "", " ")
-	logging.Printf("Node \"%s\" received response of append-entries: %s\n", ctx.GetNodeId(), a)
+	if !response.Success {
+		jsonMessage, _ := json.MarshalIndent(response, "", " ")
+		logging.Printf(
+			"Node \"%s\" received response of append-entries: %s\n",
+			ctx.GetNodeId(),
+			jsonMessage,
+		)
+	}
 
 	checkTerm(ctx, response.Term) // TODO: Check this in gRPC-interceptor
 
