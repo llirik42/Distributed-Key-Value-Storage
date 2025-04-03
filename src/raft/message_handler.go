@@ -127,7 +127,7 @@ func (handler *MessageHandler) HandleAppendEntriesRequest(
 
 	ctx.BecomeFollower()
 	ctx.SetLeaderId(request.LeaderId)
-
+	
 	return &dto.AppendEntriesResponse{Term: currentTerm, Success: true}, nil
 }
 
