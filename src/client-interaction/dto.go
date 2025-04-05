@@ -1,8 +1,11 @@
 package client_interaction
 
 const (
-	Set    = "set"
-	Delete = "delete"
+	Get           = "get"
+	Set           = "set"
+	CompareAndSet = "compare_and_set"
+	Delete        = "delete"
+	AddElement    = "add_element"
 )
 
 type ClusterInfo struct {
@@ -14,9 +17,19 @@ type ClusterInfo struct {
 }
 
 type LogCommand struct {
-	Key   string `validate:"required" json:"key"`
-	Value any    `json:"value"`
-	Type  string `enums:"set,delete" validate:"required" json:"type"`
+	Id       string `validate:"required" json:"id" format:"uuid"`
+	Key      string `validate:"required" json:"key"`
+	SubKey   string `validate:"required" json:"subKey"`
+	OldValue any    `json:"oldValue"`
+	NewValue any    `json:"newValue"`
+	Type     string `enums:"set,compare_and_set,delete,add_element" validate:"required" json:"type"`
+}
+
+type CommandExecutionInfo struct {
+	Found   bool   `validate:"required" json:"found"`
+	Value   any    `validate:"required" json:"value"`
+	Message string `validate:"required" json:"message"`
+	Success bool   `validate:"required" json:"success"`
 }
 
 type LogEntry struct {
@@ -28,25 +41,19 @@ type ErrorResponse struct {
 	Error string `validate:"required" json:"error"`
 }
 
-type SetKeyRequest struct {
-	Value any `validate:"required" json:"value"`
+type SetKeyValueRequest struct {
+	Value any `json:"value"`
 }
 
-type SetKeyResponse struct {
-	IsLeader bool   `validate:"required" json:"isLeader"`
-	LeaderId string `validate:"required" json:"leaderId"`
+type CompareAndSetKeyValueRequest struct {
+	OldValue any `json:"oldValue"`
+	NewValue any `json:"newValue"`
 }
 
-type GetKeyResponse struct {
-	IsLeader bool   `validate:"required" json:"isLeader"`
-	Value    any    `validate:"required" json:"value"`
-	Code     string `enums:"success,not_found" validate:"required" json:"code"`
-	LeaderId string `validate:"required" json:"leaderId"`
-}
-
-type DeleteKeyResponse struct {
-	IsLeader bool   `validate:"required" json:"isLeader"`
-	LeaderId string `validate:"required" json:"leaderId"`
+type CommandResponse struct {
+	IsLeader  bool   `validate:"required" json:"isLeader"`
+	LeaderId  string `validate:"required" json:"leaderId"`
+	RequestId string `validate:"required" json:"requestId" format:"uuid"`
 }
 
 type GetClusterInfoResponse struct {
@@ -59,4 +66,10 @@ type GetLogResponse struct {
 	IsLeader bool       `validate:"required" json:"isLeader"`
 	LeaderId string     `validate:"required" json:"leaderId"`
 	Entries  []LogEntry `validate:"required" json:"entries"`
+}
+
+type GetCommandExecutionInfoResponse struct {
+	IsLeader bool                 `validate:"required" json:"isLeader"`
+	LeaderId string               `validate:"required" json:"leaderId"`
+	Info     CommandExecutionInfo `validate:"required" json:"info"`
 }

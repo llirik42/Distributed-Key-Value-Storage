@@ -2,6 +2,7 @@ package in_memory
 
 import (
 	"distributed-algorithms/src/key-value"
+	"fmt"
 	"sync"
 )
 
@@ -37,8 +38,60 @@ func (s *Storage) Set(key string, value any) {
 	s.storage[key] = value
 }
 
+func (s *Storage) CompareAndSet(key string, oldValue any, newValue any) (bool, error) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	v, ok := s.storage[key]
+
+	if !ok {
+		return false, fmt.Errorf("key \"%s\" doesn't exist", key)
+	}
+
+	var success = false
+	if key_value.Equal(v, oldValue) {
+		success = true
+		s.storage[key] = newValue
+	}
+
+	return success, nil
+}
+
 func (s *Storage) Delete(key string) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	delete(s.storage, key)
+}
+
+func (s *Storage) AddElement(key string, subKey string, value any) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	_, ok := s.storage[key]
+
+	if !ok {
+		s.storage[key] = map[string]any{subKey: value}
+	} else {
+		s.storage[key].(map[string]any)[subKey] = value
+	}
+}
+
+func (s *Storage) GetElement(key string, subKey string) key_value.Value {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	rootValue, rootOk := s.storage[key]
+	if !rootOk {
+		return key_value.Value{}
+	}
+
+	elementValue, elementOk := rootValue.(map[string]any)[subKey]
+	if !elementOk {
+		return key_value.Value{}
+	}
+
+	return key_value.Value{
+		Value:  elementValue,
+		Exists: true,
+	}
 }

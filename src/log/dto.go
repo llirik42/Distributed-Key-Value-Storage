@@ -1,9 +1,19 @@
 package log
 
+// Type of command
 const (
-	Set = iota
+	Get = iota
+	Set
+	CompareAndSet
 	Delete
+	AddElement
 )
+
+type CommandExecutionInfo struct {
+	Value   any
+	Message string
+	Success bool
+}
 
 type EntryMetadata struct {
 	Term  uint32
@@ -11,9 +21,12 @@ type EntryMetadata struct {
 }
 
 type Command struct {
-	Key   string
-	Value any
-	Type  int
+	Id       string
+	Key      string
+	SubKey   string
+	OldValue any
+	NewValue any
+	Type     int
 }
 
 type Entry struct {

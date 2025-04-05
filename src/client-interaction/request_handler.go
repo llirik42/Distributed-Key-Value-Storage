@@ -3,6 +3,7 @@ package client_interaction
 import (
 	"distributed-algorithms/src/context"
 	"distributed-algorithms/src/log"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -17,70 +18,105 @@ func NewRequestHandler(ctx *context.Context) *RequestHandler {
 	}
 }
 
-// SetKey
+// SetKeyValue
 // @Id "SetKeyValue"
 // @Router /key/{key} [post]
 // @Summary Set Key Value
 // @Description Sets value for the given key. If the old value already exists, it is replaced by a new one.
 // @Tags key
 // @Param key path string true " "
-// @Param request body SetKeyRequest	true " "
-// @Success 200 {object} SetKeyResponse
+// @Param request body SetKeyValueRequest	true " "
+// @Success 200 {object} CommandResponse
 // @Failure 400 {object} ErrorResponse
-func (handler *RequestHandler) SetKey(c *gin.Context) {
+func (handler *RequestHandler) SetKeyValue(c *gin.Context) {
 	key := c.Param("key")
 	ctx := handler.ctx
 	ctx.Lock()
 	defer ctx.Unlock()
 
-	request := SetKeyRequest{}
+	request := SetKeyValueRequest{}
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 		return
 	}
 
+	var requestId = ""
 	isLeader := ctx.IsLeader()
 	if isLeader {
 		cmd := createSetKeyCommand(key, &request)
-		ctx.PushCommand(cmd)
+		requestId = ctx.PushCommand(cmd)
 	}
 
-	response := SetKeyResponse{
-		IsLeader: isLeader,
-		LeaderId: ctx.GetLeaderId(),
+	response := CommandResponse{
+		IsLeader:  isLeader,
+		LeaderId:  ctx.GetLeaderId(),
+		RequestId: requestId,
 	}
 
 	c.JSON(http.StatusOK, response)
 }
 
-// GetKey
-// @Id "GetKeyValue"
-// @Router /key/{key} [get]
-// @Summary Get Key Value
+// CompareAndSetKeyValue
+// @Id "CompareAndSetKeyValue"
+// @Router /key/{key} [patch]
+// @Summary Compare And Set Key Value
 // @Tags key
 // @Param key path string true " "
-// @Success 200 {object} GetKeyResponse
-func (handler *RequestHandler) GetKey(c *gin.Context) {
+// @Param request body CompareAndSetKeyValueRequest true " "
+// @Success 200 {object} CommandResponse
+// @Failure 400 {object} ErrorResponse
+func (handler *RequestHandler) CompareAndSetKeyValue(c *gin.Context) {
 	key := c.Param("key")
 	ctx := handler.ctx
 	ctx.Lock()
 	defer ctx.Unlock()
 
-	keyValueStorage := ctx.GetKeyValueStorage()
-	value := keyValueStorage.Get(key)
-
-	var code string
-	if value.Exists {
-		code = Success
-	} else {
-		code = NotFound
+	request := CompareAndSetKeyValueRequest{}
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
+		return
 	}
 
-	response := GetKeyResponse{
-		IsLeader: ctx.IsLeader(),
-		Value:    value.Value,
-		Code:     code,
-		LeaderId: ctx.GetLeaderId(),
+	var requestId = ""
+	isLeader := ctx.IsLeader()
+	if isLeader {
+		cmd := createCASCommand(key, &request)
+		requestId = ctx.PushCommand(cmd)
+	}
+
+	response := CommandResponse{
+		IsLeader:  isLeader,
+		LeaderId:  ctx.GetLeaderId(),
+		RequestId: requestId,
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// GetKeyValue
+// @Id "GetKeyValue"
+// @Router /key/{key} [get]
+// @Summary Get Key Value
+// @Tags key
+// @Param key path string true " "
+// @Success 200 {object} CommandResponse
+func (handler *RequestHandler) GetKeyValue(c *gin.Context) {
+	key := c.Param("key")
+	ctx := handler.ctx
+	ctx.Lock()
+	defer ctx.Unlock()
+
+	var requestId = ""
+	isLeader := ctx.IsLeader()
+	if isLeader {
+		cmd := createGetKeyCommand(key)
+		requestId = ctx.PushCommand(cmd)
+	}
+
+	response := CommandResponse{
+		IsLeader:  isLeader,
+		LeaderId:  ctx.GetLeaderId(),
+		RequestId: requestId,
 	}
 
 	c.JSON(http.StatusOK, response)
@@ -93,22 +129,24 @@ func (handler *RequestHandler) GetKey(c *gin.Context) {
 // @Description Deletes value for the given key
 // @Tags key
 // @Param key path string true " "
-// @Success 200 {object} DeleteKeyResponse
+// @Success 200 {object} CommandResponse
 func (handler *RequestHandler) DeleteKey(c *gin.Context) {
 	key := c.Param("key")
 	ctx := handler.ctx
 	ctx.Lock()
 	defer ctx.Unlock()
 
+	var requestId = ""
 	isLeader := ctx.IsLeader()
 	if isLeader {
 		cmd := createDeleteKeyCommand(key)
-		ctx.PushCommand(cmd)
+		requestId = ctx.PushCommand(cmd)
 	}
 
-	response := DeleteKeyResponse{
-		IsLeader: isLeader,
-		LeaderId: ctx.GetLeaderId(),
+	response := CommandResponse{
+		IsLeader:  isLeader,
+		LeaderId:  ctx.GetLeaderId(),
+		RequestId: requestId,
 	}
 
 	c.JSON(http.StatusOK, response)
@@ -170,11 +208,57 @@ func (handler *RequestHandler) GetLog(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-func createSetKeyCommand(key string, request *SetKeyRequest) log.Command {
+// GetCommandExecutionInfo
+// @Id "GetCommandExecutionInfo"
+// @Router /command/{commandId} [get]
+// @Summary Get Command Execution Info
+// @Tags storage
+// @Success 200 {object} GetCommandExecutionInfoResponse
+func (handler *RequestHandler) GetCommandExecutionInfo(c *gin.Context) {
+	commandId := c.Param("commandId")
+	ctx := handler.ctx
+	ctx.Lock()
+	defer ctx.Unlock()
+
+	commandExecutor := ctx.GetCommandExecutor()
+
+	info, exists := commandExecutor.GetCommandExecutionInfo(commandId)
+
+	response := GetCommandExecutionInfoResponse{
+		IsLeader: ctx.IsLeader(),
+		LeaderId: ctx.GetLeaderId(),
+		Info: CommandExecutionInfo{
+			Found:   exists,
+			Value:   info.Value,
+			Message: info.Message,
+			Success: info.Success,
+		},
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+func createGetKeyCommand(key string) log.Command {
 	return log.Command{
-		Key:   key,
-		Value: request.Value,
-		Type:  log.Set,
+		Key:  key,
+		Type: log.Get,
+	}
+}
+
+func createSetKeyCommand(key string, request *SetKeyValueRequest) log.Command {
+	return log.Command{
+		Key:      key,
+		NewValue: request.Value,
+		Type:     log.Set,
+	}
+}
+
+func createCASCommand(key string, request *CompareAndSetKeyValueRequest) log.Command {
+	return log.Command{
+		Key:      key,
+		OldValue: request.OldValue,
+		NewValue: request.NewValue,
+		Type:     log.CompareAndSet,
 	}
 }
 
@@ -194,9 +278,12 @@ func mapLogEntries(entries []log.Entry) []LogEntry {
 		result[i] = LogEntry{
 			Term: v.Term,
 			Command: LogCommand{
-				Key:   cmd.Key,
-				Value: cmd.Value,
-				Type:  mapCommandType(cmd.Type),
+				Id:       cmd.Id,
+				Key:      cmd.Key,
+				SubKey:   cmd.SubKey,
+				OldValue: cmd.OldValue,
+				NewValue: cmd.NewValue,
+				Type:     mapCommandType(cmd.Type),
 			},
 		}
 	}
@@ -206,9 +293,17 @@ func mapLogEntries(entries []log.Entry) []LogEntry {
 
 func mapCommandType(cmdType int) string {
 	switch cmdType {
+	case log.Get:
+		return Get
 	case log.Set:
 		return Set
-	default:
+	case log.CompareAndSet:
+		return CompareAndSet
+	case log.Delete:
 		return Delete
+	case log.AddElement:
+		return AddElement
+	default:
+		panic(fmt.Errorf("unknown command type: %d", cmdType))
 	}
 }

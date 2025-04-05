@@ -22,15 +22,39 @@ definitions:
     - matchIndex
     - nextIndex
     type: object
-  client_interaction.DeleteKeyResponse:
+  client_interaction.CommandExecutionInfo:
+    properties:
+      found:
+        type: boolean
+      message:
+        type: string
+      success:
+        type: boolean
+      value: {}
+    required:
+    - found
+    - message
+    - success
+    - value
+    type: object
+  client_interaction.CommandResponse:
     properties:
       isLeader:
         type: boolean
       leaderId:
         type: string
+      requestId:
+        format: uuid
+        type: string
     required:
     - isLeader
     - leaderId
+    - requestId
+    type: object
+  client_interaction.CompareAndSetKeyValueRequest:
+    properties:
+      newValue: {}
+      oldValue: {}
     type: object
   client_interaction.ErrorResponse:
     properties:
@@ -51,23 +75,18 @@ definitions:
     - isLeader
     - leaderId
     type: object
-  client_interaction.GetKeyResponse:
+  client_interaction.GetCommandExecutionInfoResponse:
     properties:
-      code:
-        enum:
-        - success
-        - not_found
-        type: string
+      info:
+        $ref: '#/definitions/client_interaction.CommandExecutionInfo'
       isLeader:
         type: boolean
       leaderId:
         type: string
-      value: {}
     required:
-    - code
+    - info
     - isLeader
     - leaderId
-    - value
     type: object
   client_interaction.GetLogResponse:
     properties:
@@ -86,16 +105,26 @@ definitions:
     type: object
   client_interaction.LogCommand:
     properties:
+      id:
+        format: uuid
+        type: string
       key:
+        type: string
+      newValue: {}
+      oldValue: {}
+      subKey:
         type: string
       type:
         enum:
         - set
+        - compare_and_set
         - delete
+        - add_element
         type: string
-      value: {}
     required:
+    - id
     - key
+    - subKey
     - type
     type: object
   client_interaction.LogEntry:
@@ -108,21 +137,9 @@ definitions:
     - command
     - term
     type: object
-  client_interaction.SetKeyRequest:
+  client_interaction.SetKeyValueRequest:
     properties:
       value: {}
-    required:
-    - value
-    type: object
-  client_interaction.SetKeyResponse:
-    properties:
-      isLeader:
-        type: boolean
-      leaderId:
-        type: string
-    required:
-    - isLeader
-    - leaderId
     type: object
 info:
   contact: {}
@@ -149,6 +166,17 @@ paths:
       summary: Get Log
       tags:
       - cluster
+  /command/{commandId}:
+    get:
+      operationId: '"GetCommandExecutionInfo"'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/client_interaction.GetCommandExecutionInfoResponse'
+      summary: Get Command Execution Info
+      tags:
+      - storage
   /key/{key}:
     delete:
       description: Deletes value for the given key
@@ -163,7 +191,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/client_interaction.DeleteKeyResponse'
+            $ref: '#/definitions/client_interaction.CommandResponse'
       summary: Delete Key Value
       tags:
       - key
@@ -179,8 +207,34 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/client_interaction.GetKeyResponse'
+            $ref: '#/definitions/client_interaction.CommandResponse'
       summary: Get Key Value
+      tags:
+      - key
+    patch:
+      operationId: '"CompareAndSetKeyValue"'
+      parameters:
+      - description: ' '
+        in: path
+        name: key
+        required: true
+        type: string
+      - description: ' '
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/client_interaction.CompareAndSetKeyValueRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/client_interaction.CommandResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/client_interaction.ErrorResponse'
+      summary: Compare And Set Key Value
       tags:
       - key
     post:
@@ -198,12 +252,12 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/client_interaction.SetKeyRequest'
+          $ref: '#/definitions/client_interaction.SetKeyValueRequest'
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/client_interaction.SetKeyResponse'
+            $ref: '#/definitions/client_interaction.CommandResponse'
         "400":
           description: Bad Request
           schema:

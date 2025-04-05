@@ -49,6 +49,23 @@ const docTemplate = `{
                 }
             }
         },
+        "/command/{commandId}": {
+            "get": {
+                "tags": [
+                    "storage"
+                ],
+                "summary": "Get Command Execution Info",
+                "operationId": "\"GetCommandExecutionInfo\"",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/client_interaction.GetCommandExecutionInfoResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/key/{key}": {
             "get": {
                 "tags": [
@@ -69,7 +86,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/client_interaction.GetKeyResponse"
+                            "$ref": "#/definitions/client_interaction.CommandResponse"
                         }
                     }
                 }
@@ -95,7 +112,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/client_interaction.SetKeyRequest"
+                            "$ref": "#/definitions/client_interaction.SetKeyValueRequest"
                         }
                     }
                 ],
@@ -103,7 +120,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/client_interaction.SetKeyResponse"
+                            "$ref": "#/definitions/client_interaction.CommandResponse"
                         }
                     },
                     "400": {
@@ -134,7 +151,46 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/client_interaction.DeleteKeyResponse"
+                            "$ref": "#/definitions/client_interaction.CommandResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "key"
+                ],
+                "summary": "Compare And Set Key Value",
+                "operationId": "\"CompareAndSetKeyValue\"",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": " ",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": " ",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/client_interaction.CompareAndSetKeyValueRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/client_interaction.CommandResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/client_interaction.ErrorResponse"
                         }
                     }
                 }
@@ -175,11 +231,33 @@ const docTemplate = `{
                 }
             }
         },
-        "client_interaction.DeleteKeyResponse": {
+        "client_interaction.CommandExecutionInfo": {
+            "type": "object",
+            "required": [
+                "found",
+                "message",
+                "success",
+                "value"
+            ],
+            "properties": {
+                "found": {
+                    "type": "boolean"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                },
+                "value": {}
+            }
+        },
+        "client_interaction.CommandResponse": {
             "type": "object",
             "required": [
                 "isLeader",
-                "leaderId"
+                "leaderId",
+                "requestId"
             ],
             "properties": {
                 "isLeader": {
@@ -187,7 +265,18 @@ const docTemplate = `{
                 },
                 "leaderId": {
                     "type": "string"
+                },
+                "requestId": {
+                    "type": "string",
+                    "format": "uuid"
                 }
+            }
+        },
+        "client_interaction.CompareAndSetKeyValueRequest": {
+            "type": "object",
+            "properties": {
+                "newValue": {},
+                "oldValue": {}
             }
         },
         "client_interaction.ErrorResponse": {
@@ -219,29 +308,23 @@ const docTemplate = `{
                 }
             }
         },
-        "client_interaction.GetKeyResponse": {
+        "client_interaction.GetCommandExecutionInfoResponse": {
             "type": "object",
             "required": [
-                "code",
+                "info",
                 "isLeader",
-                "leaderId",
-                "value"
+                "leaderId"
             ],
             "properties": {
-                "code": {
-                    "type": "string",
-                    "enum": [
-                        "success",
-                        "not_found"
-                    ]
+                "info": {
+                    "$ref": "#/definitions/client_interaction.CommandExecutionInfo"
                 },
                 "isLeader": {
                     "type": "boolean"
                 },
                 "leaderId": {
                     "type": "string"
-                },
-                "value": {}
+                }
             }
         },
         "client_interaction.GetLogResponse": {
@@ -269,21 +352,33 @@ const docTemplate = `{
         "client_interaction.LogCommand": {
             "type": "object",
             "required": [
+                "id",
                 "key",
+                "subKey",
                 "type"
             ],
             "properties": {
+                "id": {
+                    "type": "string",
+                    "format": "uuid"
+                },
                 "key": {
+                    "type": "string"
+                },
+                "newValue": {},
+                "oldValue": {},
+                "subKey": {
                     "type": "string"
                 },
                 "type": {
                     "type": "string",
                     "enum": [
                         "set",
-                        "delete"
+                        "compare_and_set",
+                        "delete",
+                        "add_element"
                     ]
-                },
-                "value": {}
+                }
             }
         },
         "client_interaction.LogEntry": {
@@ -301,28 +396,10 @@ const docTemplate = `{
                 }
             }
         },
-        "client_interaction.SetKeyRequest": {
+        "client_interaction.SetKeyValueRequest": {
             "type": "object",
-            "required": [
-                "value"
-            ],
             "properties": {
                 "value": {}
-            }
-        },
-        "client_interaction.SetKeyResponse": {
-            "type": "object",
-            "required": [
-                "isLeader",
-                "leaderId"
-            ],
-            "properties": {
-                "isLeader": {
-                    "type": "boolean"
-                },
-                "leaderId": {
-                    "type": "string"
-                }
             }
         }
     }

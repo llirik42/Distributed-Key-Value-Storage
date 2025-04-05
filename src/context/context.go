@@ -5,6 +5,8 @@ import (
 	"distributed-algorithms/src/key-value"
 	"distributed-algorithms/src/log"
 	"distributed-algorithms/src/raft/transport"
+	"github.com/google/uuid"
+	logging "log"
 	"math/rand"
 	"sync"
 	"time"
@@ -33,6 +35,7 @@ type Context struct {
 	leaderLoopTicker            *time.Ticker
 	cfg                         config.RaftConfig
 	logStorage                  log.Storage
+	commandExecutor             log.CommandExecutor
 	keyValueStorage             key_value.Storage
 	clients                     []transport.Client
 }
@@ -79,6 +82,14 @@ func (ctx *Context) GetLogStorage() log.Storage {
 
 func (ctx *Context) SetLogStorage(storage log.Storage) {
 	ctx.logStorage = storage
+}
+
+func (ctx *Context) GetCommandExecutor() log.CommandExecutor {
+	return ctx.commandExecutor
+}
+
+func (ctx *Context) SetCommandExecutor(executor log.CommandExecutor) {
+	ctx.commandExecutor = executor
 }
 
 func (ctx *Context) GetKeyValueStorage() key_value.Storage {
@@ -171,13 +182,19 @@ func (ctx *Context) GetClusterSize() uint32 {
 	return 1 + uint32(len(ctx.cfg.OtherNodes))
 }
 
-func (ctx *Context) PushCommand(cmd log.Command) {
+func (ctx *Context) PushCommand(cmd log.Command) string {
+	commandId := uuid.NewString()
+
+	cmd.Id = commandId
+
 	entry := log.Entry{
 		Term:    ctx.currentTerm,
 		Command: cmd,
 	}
 
 	ctx.logStorage.PushLogEntry(entry)
+
+	return commandId
 }
 
 func (ctx *Context) StartTickers() {
@@ -267,12 +284,13 @@ func (ctx *Context) BecomeLeader() {
 	ctx.followerCandidateLoopTicker.Stop()
 	ctx.leaderLoopTicker.Reset(getBroadcastTimeout(&ctx.cfg))
 	ctx.initNextAndMatchIndexes()
+	logging.Println("Became leader!")
 }
 
 func (ctx *Context) applyCommitedEntries() {
 	for i := ctx.lastApplied + 1; i <= ctx.commitIndex; i++ {
 		cmd := ctx.logStorage.GetEntryCommand(i)
-		log.ApplyCommand(cmd, ctx.keyValueStorage)
+		ctx.commandExecutor.Execute(cmd)
 		ctx.lastApplied++
 	}
 }
