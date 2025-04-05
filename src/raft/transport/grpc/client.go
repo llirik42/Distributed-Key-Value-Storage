@@ -11,6 +11,7 @@ import (
 
 type Client struct {
 	index                        int
+	address                      string
 	gRPCClient                   pb.RaftServiceClient
 	gRPCConnection               *grpc.ClientConn
 	handleRequestForVoteResponse transport.HandleRequestForVoteResponse
@@ -47,6 +48,10 @@ func (client *Client) SendAppendEntries(request dto.AppendEntriesRequest) error 
 
 func (client *Client) GetIndex() int {
 	return client.index
+}
+
+func (client *Client) GetAddress() string {
+	return client.address
 }
 
 func (client *Client) Close() error {
