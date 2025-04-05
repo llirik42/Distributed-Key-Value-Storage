@@ -1,13 +1,19 @@
 package log
 
 type Storage interface {
+	GetLength() uint64
+
+	FindFirstEntryWithTerm(term uint32) (uint64, bool)
+
+	FindLastEntryWithTerm(term uint32) (uint64, bool)
+
 	GetEntryMetadata(index uint64) EntryMetadata
 
 	GetEntryCommand(index uint64) Command
 
 	GetLastEntryMetadata() EntryMetadata
 
-	GetLogEntries(startIndex uint64) []Entry
+	GetEntries(startIndex uint64) []Entry
 
 	TryGetEntryMetadata(index uint64) (EntryMetadata, bool)
 

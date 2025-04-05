@@ -25,6 +25,8 @@ type AppendEntriesRequest struct {
 }
 
 type AppendEntriesResponse struct {
-	Term    uint32
-	Success bool
+	Term          uint32
+	Success       bool
+	ConflictTerm  uint32
+	ConflictIndex uint64
 }

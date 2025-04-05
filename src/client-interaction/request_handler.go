@@ -197,7 +197,7 @@ func (handler *RequestHandler) GetLog(c *gin.Context) {
 	defer ctx.Unlock()
 
 	logStorage := ctx.GetLogStorage()
-	entries := logStorage.GetLogEntries(1) // Get all entries
+	entries := logStorage.GetEntries(1) // Get all entries
 
 	response := GetLogResponse{
 		IsLeader: ctx.IsLeader(),
