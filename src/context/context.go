@@ -6,7 +6,6 @@ import (
 	"distributed-algorithms/src/log"
 	"distributed-algorithms/src/raft/transport"
 	"github.com/google/uuid"
-	logging "log"
 	"math/rand"
 	"sync"
 	"time"
@@ -284,7 +283,6 @@ func (ctx *Context) BecomeLeader() {
 	ctx.followerCandidateLoopTicker.Stop()
 	ctx.leaderLoopTicker.Reset(getBroadcastTimeout(&ctx.cfg))
 	ctx.initNextAndMatchIndexes()
-	logging.Println("Became leader!")
 }
 
 func (ctx *Context) applyCommitedEntries() {
