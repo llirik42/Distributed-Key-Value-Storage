@@ -190,7 +190,7 @@ func (handler *MessageHandler) HandleRequestVoteResponse(
 
 	if voteNumber > clusterSize/2 {
 		ctx.BecomeLeader()
-		logging.Printf("Became leader!\n")
+		logging.Printf("Node \"%s\" became leader!\n", ctx.GetNodeId())
 		utils.SendAppendEntries(ctx)
 	}
 }
