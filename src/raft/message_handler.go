@@ -38,7 +38,10 @@ func (handler *MessageHandler) HandleRequestVoteRequest(
 	// Compare request's term and current term
 	currentTerm := ctx.GetCurrentTerm()
 	if request.Term < currentTerm {
-		return &dto.RequestVoteResponse{Term: currentTerm, VoteGranted: false}, nil
+		return &dto.RequestVoteResponse{
+			Term:        currentTerm,
+			VoteGranted: false,
+		}, nil
 	}
 
 	// Compare current node's log and candidate's log
@@ -50,7 +53,10 @@ func (handler *MessageHandler) HandleRequestVoteRequest(
 		request.LastLogIndex,
 	) < 0
 	if isCurrentNodeLogMoreUpToDate {
-		return &dto.RequestVoteResponse{Term: currentTerm, VoteGranted: false}, nil
+		return &dto.RequestVoteResponse{
+			Term:        currentTerm,
+			VoteGranted: false,
+		}, nil
 	}
 
 	// Try to vote for the candidate
@@ -60,7 +66,10 @@ func (handler *MessageHandler) HandleRequestVoteRequest(
 		ctx.ResetElectionTimeout()
 	}
 
-	return &dto.RequestVoteResponse{Term: currentTerm, VoteGranted: voteGranted}, nil
+	return &dto.RequestVoteResponse{
+		Term:        currentTerm,
+		VoteGranted: voteGranted,
+	}, nil
 }
 
 func (handler *MessageHandler) HandleAppendEntriesRequest(
@@ -106,11 +115,30 @@ func (handler *MessageHandler) HandleAppendEntriesRequest(
 		return &dto.AppendEntriesResponse{Term: currentTerm, Success: false}, nil
 	}
 
-	// Compare leader's log and current node's log
 	logEntryMetadata, exists := logStorage.TryGetEntryMetadata(request.PrevLogIndex)
+
+	if !exists {
+		// Follower doesn't have log entry at prevLogIndex
+		return &dto.AppendEntriesResponse{
+			Term:          currentTerm,
+			Success:       false,
+			ConflictTerm:  0,
+			ConflictIndex: logStorage.GetLength() + 1,
+		}, nil
+	}
+
 	logEntryTerm := logEntryMetadata.Term
-	if !exists || logEntryTerm != request.PrevLogTerm {
-		return &dto.AppendEntriesResponse{Term: currentTerm, Success: false}, nil
+	if logEntryTerm != request.PrevLogTerm {
+		// Term at prevLogIndex doesn't match prevLogTerm
+
+		index, _ := logStorage.FindFirstEntryWithTerm(logEntryTerm)
+
+		return &dto.AppendEntriesResponse{
+			Term:          currentTerm,
+			Success:       false,
+			ConflictTerm:  logEntryTerm,
+			ConflictIndex: index,
+		}, nil
 	}
 
 	// Add new entries + resolve conflicts
@@ -121,14 +149,17 @@ func (handler *MessageHandler) HandleAppendEntriesRequest(
 
 	// Update commitIndex
 	if request.LeaderCommit > ctx.GetCommitIndex() {
-		newCommitIndex := min(request.LeaderCommit, logStorage.GetLastEntryMetadata().Index)
+		newCommitIndex := min(request.LeaderCommit, logStorage.GetLength())
 		ctx.SetCommitIndex(newCommitIndex)
 	}
 
 	ctx.BecomeFollower()
 	ctx.SetLeaderId(request.LeaderId)
 
-	return &dto.AppendEntriesResponse{Term: currentTerm, Success: true}, nil
+	return &dto.AppendEntriesResponse{
+		Term:    currentTerm,
+		Success: true,
+	}, nil
 }
 
 func (handler *MessageHandler) HandleRequestVoteResponse(
@@ -181,7 +212,10 @@ func (handler *MessageHandler) HandleAppendEntriesResponse(
 		)
 	}
 
-	checkTerm(ctx, response.Term) // TODO: Check this in gRPC-interceptor
+	if !checkTerm(ctx, response.Term) {
+		// Received response from node with greater term
+		return
+	}
 
 	clientIndex := client.GetIndex() // Index of responder's connection
 
@@ -190,13 +224,30 @@ func (handler *MessageHandler) HandleAppendEntriesResponse(
 		ctx.SetNextIndex(clientIndex, lastSentIndex+1)
 		ctx.SetMatchIndex(clientIndex, lastSentIndex)
 	} else {
-		ctx.DecrementNextIndex(clientIndex)
+		if response.ConflictTerm == 0 {
+			// Conflict of index, so received response from node that doesn't have log entry at prevLogIndex
+			ctx.SetNextIndex(clientIndex, response.ConflictIndex)
+		} else {
+			// Conflict of term, so received response from node which log[prevLogIndex] doesn't match prevLogTerm
+
+			index, ok := ctx.GetLogStorage().FindLastEntryWithTerm(response.ConflictTerm)
+
+			// Whether leader contains log entries with term ConflictTerm
+			if ok {
+				ctx.SetNextIndex(clientIndex, index+1)
+			} else {
+				ctx.SetNextIndex(clientIndex, response.ConflictIndex)
+			}
+		}
 	}
 }
 
-func checkTerm(ctx *context.Context, term uint32) {
+func checkTerm(ctx *context.Context, term uint32) bool {
 	if term > ctx.GetCurrentTerm() {
 		ctx.SetCurrentTerm(term)
 		ctx.BecomeFollower()
+		return false
 	}
+
+	return true
 }

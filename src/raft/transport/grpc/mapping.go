@@ -72,15 +72,19 @@ func MapAppendEntriesRequestFromGRPC(msg *pb.AppendEntriesRequest) *dto.AppendEn
 
 func MapAppendEntriesResponseToGRPC(msg *dto.AppendEntriesResponse) *pb.AppendEntriesResponse {
 	return &pb.AppendEntriesResponse{
-		Term:    msg.Term,
-		Success: msg.Success,
+		Term:          msg.Term,
+		Success:       msg.Success,
+		ConflictTerm:  msg.ConflictTerm,
+		ConflictIndex: msg.ConflictIndex,
 	}
 }
 
 func MapAppendEntriesResponseFromGRPC(msg *pb.AppendEntriesResponse) *dto.AppendEntriesResponse {
 	return &dto.AppendEntriesResponse{
-		Term:    msg.Term,
-		Success: msg.Success,
+		Term:          msg.Term,
+		Success:       msg.Success,
+		ConflictTerm:  msg.ConflictTerm,
+		ConflictIndex: msg.ConflictIndex,
 	}
 }
 

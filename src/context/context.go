@@ -6,7 +6,6 @@ import (
 	"distributed-algorithms/src/log"
 	"distributed-algorithms/src/raft/transport"
 	"github.com/google/uuid"
-	logging "log"
 	"math/rand"
 	"sync"
 	"time"
@@ -284,7 +283,6 @@ func (ctx *Context) BecomeLeader() {
 	ctx.followerCandidateLoopTicker.Stop()
 	ctx.leaderLoopTicker.Reset(getBroadcastTimeout(&ctx.cfg))
 	ctx.initNextAndMatchIndexes()
-	logging.Println("Became leader!")
 }
 
 func (ctx *Context) applyCommitedEntries() {
@@ -296,10 +294,8 @@ func (ctx *Context) applyCommitedEntries() {
 }
 
 func (ctx *Context) initNextAndMatchIndexes() {
-	lastLogEntryIndex := ctx.logStorage.GetLastEntryMetadata().Index
-
 	for i := 0; i < len(ctx.clients); i++ {
-		ctx.nextIndex[i] = lastLogEntryIndex + 1
+		ctx.nextIndex[i] = 1 // TODO: modify that leader won't send ALL entries at start
 		ctx.matchIndex[i] = 0
 	}
 }
@@ -308,11 +304,11 @@ func (ctx *Context) findNewCommitIndex() uint64 {
 	currentTerm := ctx.currentTerm
 	clusterSizeHalved := ctx.GetClusterSize() / 2
 
-	lastLogEntryIndex := ctx.logStorage.GetLastEntryMetadata().Index
+	logLength := ctx.logStorage.GetLength()
 
 	newCommitIndex := ctx.commitIndex
 
-	for i := ctx.commitIndex + 1; i <= lastLogEntryIndex; i++ {
+	for i := ctx.commitIndex + 1; i <= logLength; i++ {
 		var count uint32 = 1 // By default, include current node (leader)
 		for _, v := range ctx.matchIndex {
 			if v >= i {

@@ -102,6 +102,8 @@ message AppendEntriesRequest {
 message AppendEntriesResponse {
   uint32 term = 1;
   bool success = 2;
+  uint32 conflictTerm = 3;
+  uint64 conflictIndex = 4;
 }
 
 service RaftService {

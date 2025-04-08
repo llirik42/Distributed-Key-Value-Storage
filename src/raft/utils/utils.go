@@ -16,7 +16,7 @@ func SendAppendEntries(ctx *context.Context) {
 		nextIndex := ctx.GetNextIndex(clientIndex)
 		prevLogIndex := nextIndex - 1
 		prevLogTerm := logStorage.GetEntryMetadata(prevLogIndex).Term
-		entries := logStorage.GetLogEntries(nextIndex)
+		entries := logStorage.GetEntries(nextIndex)
 
 		lastSentIndex := prevLogIndex + uint64(len(entries))
 		ctx.SetLastSentIndex(clientIndex, lastSentIndex)

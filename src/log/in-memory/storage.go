@@ -21,6 +21,72 @@ func NewStorage() log.Storage {
 	}
 }
 
+func (storage *Storage) GetLength() uint64 {
+	return storage.length
+}
+
+func (storage *Storage) FindFirstEntryWithTerm(term uint32) (uint64, bool) {
+	if term == 0 {
+		return 0, true
+	}
+
+	if storage.isEmpty() {
+		return 0, false
+	}
+
+	// Optimization
+	lastEntryTerm := storage.getLastEntry().Term
+	if lastEntryTerm < term {
+		return 0, false
+	}
+
+	for i := uint64(1); i <= storage.length; i++ {
+		e := storage.getEntry(i)
+
+		if e.Term == term {
+			return i, true
+		}
+
+		if e.Term > term {
+			// We won't find entries with given term anymore
+			break
+		}
+	}
+
+	return 0, false
+}
+
+func (storage *Storage) FindLastEntryWithTerm(term uint32) (uint64, bool) {
+	if term == 0 {
+		return 0, true
+	}
+
+	if storage.isEmpty() {
+		return 0, false
+	}
+
+	// Optimization
+	lastEntryTerm := storage.getLastEntry().Term
+	if lastEntryTerm < term {
+		return 0, false
+	}
+
+	for i := storage.length; i > 0; i++ {
+		e := storage.getEntry(i)
+
+		if e.Term == term {
+			return i, true
+		}
+
+		if e.Term < term {
+			// We won't find entries with given term anymore
+			break
+		}
+	}
+
+	return 0, false
+}
+
 func (storage *Storage) GetEntryMetadata(index uint64) log.EntryMetadata {
 	storage.validateIndex(index)
 
@@ -51,7 +117,7 @@ func (storage *Storage) GetLastEntryMetadata() log.EntryMetadata {
 		return log.EntryMetadata{}
 	}
 
-	entry := storage.getEntry(storage.length)
+	entry := storage.getLastEntry()
 
 	return log.EntryMetadata{
 		Term:  entry.Term,
@@ -59,7 +125,7 @@ func (storage *Storage) GetLastEntryMetadata() log.EntryMetadata {
 	}
 }
 
-func (storage *Storage) GetLogEntries(startIndex uint64) []log.Entry {
+func (storage *Storage) GetEntries(startIndex uint64) []log.Entry {
 	return storage.entries[getPhysicalIndex(startIndex):storage.length]
 }
 
@@ -98,6 +164,14 @@ func (storage *Storage) AddLogEntry(entry log.Entry, index uint64) {
 
 	storage.entries[index-1] = entry
 	storage.length = min(storage.length, index) // Delete all records after inserted one
+}
+
+func (storage *Storage) getFirstEntry() log.Entry {
+	return storage.getEntry(1)
+}
+
+func (storage *Storage) getLastEntry() log.Entry {
+	return storage.getEntry(storage.length)
 }
 
 func (storage *Storage) getEntry(index uint64) log.Entry {
