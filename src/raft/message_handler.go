@@ -1,11 +1,11 @@
 package raft
 
 import (
-	"distributed-algorithms/src/context"
-	"distributed-algorithms/src/log"
-	"distributed-algorithms/src/raft/dto"
-	"distributed-algorithms/src/raft/transport"
-	"distributed-algorithms/src/raft/utils"
+	"distributed-key-value-storage/src/context"
+	"distributed-key-value-storage/src/log"
+	"distributed-key-value-storage/src/raft/dto"
+	"distributed-key-value-storage/src/raft/transport"
+	"distributed-key-value-storage/src/raft/utils"
 	"encoding/json"
 	logging "log"
 )

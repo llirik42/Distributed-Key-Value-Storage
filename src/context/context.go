@@ -1,10 +1,10 @@
 package context
 
 import (
-	"distributed-algorithms/src/config"
-	"distributed-algorithms/src/key-value"
-	"distributed-algorithms/src/log"
-	"distributed-algorithms/src/raft/transport"
+	"distributed-key-value-storage/src/config"
+	"distributed-key-value-storage/src/key-value"
+	"distributed-key-value-storage/src/log"
+	"distributed-key-value-storage/src/raft/transport"
 	"github.com/google/uuid"
 	"math/rand"
 	"sync"

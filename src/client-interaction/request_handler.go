@@ -1,8 +1,8 @@
 package client_interaction
 
 import (
-	"distributed-algorithms/src/context"
-	"distributed-algorithms/src/log"
+	"distributed-key-value-storage/src/context"
+	"distributed-key-value-storage/src/log"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"

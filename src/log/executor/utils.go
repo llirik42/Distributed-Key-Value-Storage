@@ -1,7 +1,7 @@
 package executor
 
 import (
-	"distributed-algorithms/src/log"
+	"distributed-key-value-storage/src/log"
 )
 
 func commandExecutionInfoToMap(info log.CommandExecutionInfo) map[string]any {

@@ -1,7 +1,7 @@
 package in_memory
 
 import (
-	"distributed-algorithms/src/key-value"
+	"distributed-key-value-storage/src/key-value"
 	"fmt"
 	"sync"
 )

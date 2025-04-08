@@ -1,7 +1,7 @@
 package in_memory
 
 import (
-	"distributed-algorithms/src/log"
+	"distributed-key-value-storage/src/log"
 	"fmt"
 )
 

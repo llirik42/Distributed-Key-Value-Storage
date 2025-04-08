@@ -1,8 +1,8 @@
 package loops
 
 import (
-	"distributed-algorithms/src/context"
-	"distributed-algorithms/src/raft/utils"
+	"distributed-key-value-storage/src/context"
+	"distributed-key-value-storage/src/raft/utils"
 )
 
 func LeaderLoop(ctx *context.Context) {

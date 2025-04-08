@@ -1,14 +1,14 @@
 package main
 
 import (
-	"distributed-algorithms/src/client-interaction"
-	"distributed-algorithms/src/config"
-	"distributed-algorithms/src/context"
-	kv "distributed-algorithms/src/key-value/in-memory"
-	"distributed-algorithms/src/log/executor"
-	log "distributed-algorithms/src/log/in-memory"
-	"distributed-algorithms/src/raft/node"
-	"distributed-algorithms/src/raft/transport/grpc"
+	"distributed-key-value-storage/src/client-interaction"
+	"distributed-key-value-storage/src/config"
+	"distributed-key-value-storage/src/context"
+	kv "distributed-key-value-storage/src/key-value/in-memory"
+	"distributed-key-value-storage/src/log/executor"
+	log "distributed-key-value-storage/src/log/in-memory"
+	"distributed-key-value-storage/src/raft/node"
+	"distributed-key-value-storage/src/raft/transport/grpc"
 	logging "log"
 	"os"
 )

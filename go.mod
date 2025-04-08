@@ -1,4 +1,4 @@
-module distributed-algorithms
+module distributed-key-value-storage
 
 go 1.24.0
 

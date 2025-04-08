@@ -2,8 +2,8 @@ package grpc
 
 import (
 	"context"
-	pb "distributed-algorithms/generated/proto"
-	"distributed-algorithms/src/raft/transport"
+	pb "distributed-key-value-storage/generated/proto"
+	"distributed-key-value-storage/src/raft/transport"
 	"fmt"
 	"google.golang.org/grpc"
 	"net"

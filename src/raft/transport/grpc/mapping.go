@@ -1,9 +1,9 @@
 package grpc
 
 import (
-	pb "distributed-algorithms/generated/proto"
-	"distributed-algorithms/src/log"
-	"distributed-algorithms/src/raft/dto"
+	pb "distributed-key-value-storage/generated/proto"
+	"distributed-key-value-storage/src/log"
+	"distributed-key-value-storage/src/raft/dto"
 	"fmt"
 )
 

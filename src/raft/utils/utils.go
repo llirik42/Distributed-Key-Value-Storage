@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"distributed-algorithms/src/context"
-	"distributed-algorithms/src/raft/dto"
+	"distributed-key-value-storage/src/context"
+	"distributed-key-value-storage/src/raft/dto"
 )
 
 func SendAppendEntries(ctx *context.Context) {

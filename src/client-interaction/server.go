@@ -1,9 +1,9 @@
 package client_interaction
 
 import (
-	_ "distributed-algorithms/api"
-	"distributed-algorithms/src/config"
-	"distributed-algorithms/src/context"
+	_ "distributed-key-value-storage/api"
+	"distributed-key-value-storage/src/config"
+	"distributed-key-value-storage/src/context"
 	"github.com/gin-gonic/gin"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"

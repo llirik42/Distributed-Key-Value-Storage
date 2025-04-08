@@ -1,11 +1,11 @@
 package node
 
 import (
-	"distributed-algorithms/src/config"
-	"distributed-algorithms/src/context"
-	"distributed-algorithms/src/raft"
-	"distributed-algorithms/src/raft/loops"
-	"distributed-algorithms/src/raft/transport"
+	"distributed-key-value-storage/src/config"
+	"distributed-key-value-storage/src/context"
+	"distributed-key-value-storage/src/raft"
+	"distributed-key-value-storage/src/raft/loops"
+	"distributed-key-value-storage/src/raft/transport"
 	"encoding/json"
 	"fmt"
 	logging "log"

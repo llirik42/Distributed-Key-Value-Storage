@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"distributed-algorithms/src/log"
+	"distributed-key-value-storage/src/log"
 )
 
 type RequestVoteRequest struct {

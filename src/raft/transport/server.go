@@ -1,7 +1,7 @@
 package transport
 
 import (
-	"distributed-algorithms/src/raft/dto"
+	"distributed-key-value-storage/src/raft/dto"
 )
 
 type HandleRequestForVoteRequest func(request *dto.RequestVoteRequest) (*dto.RequestVoteResponse, error)
